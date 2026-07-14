@@ -202,5 +202,5 @@ composition, collection process, uses, distribution, maintenance):
 
 The reference corpus (240,000 instances, 583 MB, `--instances 4000`) is
 regenerable locally via `python -m plantforge.corpus --instances 4000`, or
-downloadable pre-generated from Hugging Face: `<HF dataset repo — TBD,
-publish pending>`.
+downloadable pre-generated from Hugging Face:
+[`stark4062/plantforge`](https://huggingface.co/datasets/stark4062/plantforge).
