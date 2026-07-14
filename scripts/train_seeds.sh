@@ -26,12 +26,18 @@ for seed in $SEEDS; do
     for mode in headline corpus; do
         if [ "$mode" = headline ]; then name=wh_only; else name=corpus; fi
         ck="$PLANTFORGE_DATA/eval_${name}_s${seed}.pt"
+        prev_steps=-1
         while true; do
             steps=$(done_steps "$ck")
             if [ "$steps" -ge "$TOTAL" ]; then
                 echo "== seed $seed $mode: done ($steps/$TOTAL)"
                 break
             fi
+            if [ "$steps" -le "$prev_steps" ]; then
+                echo "== STALLED seed $seed $mode: step stuck at $steps after a successful run"
+                exit 1
+            fi
+            prev_steps=$steps
             echo "== seed $seed $mode: at $steps/$TOTAL, training..."
             PF_SEED=$seed python -m plantforge.evaluate "$mode" \
                 || { echo "== FAILED seed $seed $mode"; exit 1; }
