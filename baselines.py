@@ -21,7 +21,8 @@ LAGS = (2, 4, 8)      # order candidates (na = nb = k)
 VAL = 32              # last VAL context samples -> order selection
 RIDGE = 1e-6          # Tikhonov regularization for conditioning
 CLIP = 1e6            # free-run state bound: a diverged NARX rollout reports a
-                      # huge-but-finite nMSE instead of overflowing to nan
+                      # huge-but-finite nMSE instead of overflowing to nan; NaN
+                      # predictions are zeroed before clamping to ensure finiteness
 EVAL_SEEDS = range(900, 906)   # same eval seeds as evaluate.nmse
 
 
@@ -70,10 +71,13 @@ def _freerun(u, y, w, k, poly):
     """Simulate t = T_CTX..D-1 with predicted y fed back as lags; true y is
     used only for t < T_CTX. The fed-back state is clipped to +-CLIP so an
     unstable fit (common for poly-NARX in free-run) yields a huge-but-finite
-    error instead of overflowing float64 to nan."""
+    error instead of overflowing float64 to nan. NaN predictions are zeroed
+    before clamping to ensure the fed-back state is always finite."""
     yhat = y.copy()
     for t in range(T_CTX, D):
         pred = _phi(_lag_vector(u, yhat, k, t), poly) @ w
+        if not np.isfinite(pred):
+            pred = 0.0
         yhat[t] = min(max(pred, -CLIP), CLIP)
     return yhat[T_CTX:]
 
