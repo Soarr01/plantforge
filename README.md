@@ -38,6 +38,8 @@ track, not claimed solved. The `saturate` rate-interpolation cell is the one
 place `wh_only` beats `corpus` — reported rather than smoothed over; "corpus
 training helps" is not a universal law across every cell.
 
+![Synthetic transfer matrix, wh_only vs corpus, 5-seed mean±std](figures/fig1_transfer_matrix.png)
+
 ## Zero-shot on real measured plants (`realbench.py`)
 
 Both checkpoints, trained only on synthetic corpus data, evaluated **zero-shot**
@@ -73,6 +75,8 @@ is a genuinely strong baseline, not a strawman:
   most cells) — a legitimate finding about naive polynomial NARX instability
   under 32-step free simulation, not a bug.
 
+![Zero-shot real-plant nMSE: wh_only vs corpus vs ARX](figures/fig2_real_plant.png)
+
 ## Identifiability annotations do not predict prediction difficulty (`ident_exp.py`)
 
 The corpus's per-instance Fisher-information annotations (rel-CRLB, FIM
@@ -90,6 +94,12 @@ identify (rel-CRLB) is typically one with little influence on the output, so
 the model doesn't need to infer what barely affects y. The annotations
 remain valuable as corpus metadata (excitation-design analysis, dataset
 characterization) but are **not** a prediction-difficulty predictor.
+
+![Within-cell Spearman r, 40 cells, mostly negative](figures/fig3_within_cell_spearman.png)
+
+The apparent positive trend in a naive pooled/mean analysis is a heavy-tail
+artifact, not signal — see `figures/fig4_quartile_artifact.png` and
+`figures/README.md` for the mean-vs-median comparison.
 
 ## Design invariants (tested, `tests/`)
 
@@ -183,6 +193,7 @@ rate (20 Hz), held-out excitations (chirp, closedloop).
 | `baselines.py` | ARX / degree-2 polynomial NARX baselines under the in-context free-run protocol |
 | `ident_exp.py` | identifiability-annotations-vs-prediction-difficulty experiment |
 | `scripts/train_seeds.sh` | background-friendly, resumable multi-seed training driver |
+| `figures/make_figures.py` | regenerates all paper figures from the reviewed result numbers |
 
 Full experiment results and reading notes:
 [`docs/superpowers/results/2026-07-14-experiment-results.md`](docs/superpowers/results/2026-07-14-experiment-results.md).
