@@ -3,6 +3,24 @@ Scores corpus-model checkpoints per-instance on corpus shards (which carry
 per-instance rel-CRLB and FIM condition annotations) and reports Spearman
 correlations plus a quartile table.
 
+Analysis structure (PRIMARY vs SECONDARY), per statistical review:
+Pooling instances across all 40 cells (family x excitation x rate) before
+correlating confounds the hypothesis: cell structure changes both
+identifiability and model difficulty simultaneously, which can manufacture
+a pooled correlation of either sign (Simpson's paradox) independent of the
+within-cell relationship. The hypothesis under test is intrinsically
+within-cell -- holding (family, excitation, rate) fixed, do harder-to-identify
+parameter draws yield higher model difficulty? So the PRIMARY statistic is
+each cell's own Spearman(max rel-CRLB, nMSE), aggregated (median/mean) across
+cells. The pooled-across-cells Spearman (and its per-family breakdown) is kept
+as a SECONDARY, clearly-labeled diagnostic, since it mixes within-cell signal
+with between-cell confounds.
+
+The quartile table reports both bin-mean and bin-median nMSE: per-instance
+nMSE is heavy-tailed (can reach ~1e9 for near-flat query-horizon instances,
+e.g. deadzone outputs, that can dominate a bin's mean), so the median is the
+defensible summary; the mean is kept alongside for reference.
+
 Only dt in {0.05, 0.02} cells are usable: shards hold T_PHYS=12.8 s, so
 10 Hz cells have 128 < D=224 samples.
 
@@ -46,14 +64,23 @@ def nmse_per_instance(model, u, y):
 
 def quartile_table(metric: np.ndarray, nmse: np.ndarray):
     """Bin instances into metric quartiles; return
-    [(bin mean metric, bin mean nMSE, bin count)] x 4."""
+    [(bin mean metric, bin mean nMSE, bin median nMSE, bin count)] x 4.
+    Bin-mean nMSE is heavy-tail-dominated (a single ~1e9 instance can swamp
+    a 2000-instance bin); bin-median nMSE is the defensible summary and is
+    reported alongside it. Empty bins (possible with heavy quantile ties)
+    are reported with n=0 and nan placeholders rather than raising a numpy
+    empty-slice warning."""
     qs = np.quantile(metric, [0.25, 0.5, 0.75])
     bins = np.digitize(metric, qs)
     rows = []
     for b in range(4):
         mask = bins == b
+        n = int(mask.sum())
+        if n == 0:
+            rows.append((float("nan"), float("nan"), float("nan"), 0))
+            continue
         rows.append((float(metric[mask].mean()), float(nmse[mask].mean()),
-                     int(mask.sum())))
+                     float(np.median(nmse[mask])), n))
     return rows
 
 
@@ -91,6 +118,7 @@ def main():
           f"(corpus model, {len(models)} seed(s), {n_per_cell}/cell) ===")
 
     fams, crlbs, conds, nmses = [], [], [], []
+    cell_rows = []  # (fam, exc, dt, r_cell, p_cell, n)
     for fam in FAMILIES:
         for exc in EXCITATIONS:
             for dt in USABLE_DTS:
@@ -107,25 +135,56 @@ def main():
                 fams += [fam] * len(v)
                 crlbs.append(crlb); conds.append(cond); nmses.append(v)
 
+                ok_cell = np.isfinite(crlb) & np.isfinite(v)
+                crlb_f, v_f = crlb[ok_cell], v[ok_cell]
+                n_cell = len(v_f)
+                if n_cell > 10:
+                    r_cell, p_cell = spearmanr(crlb_f, v_f)
+                    cell_rows.append((fam, exc, dt, r_cell, p_cell, n_cell))
+
     crlb = np.concatenate(crlbs); cond = np.concatenate(conds)
     nmse = np.concatenate(nmses); fams = np.array(fams)
     ok = np.isfinite(crlb) & np.isfinite(cond) & np.isfinite(nmse)
     crlb, cond, nmse, fams = crlb[ok], cond[ok], nmse[ok], fams[ok]
     print(f"  instances scored: {len(nmse)} (dropped {int((~ok).sum())} non-finite)")
 
+    cell_r = np.array([c[3] for c in cell_rows])
+    n_cells = len(cell_rows)
+    n_pos = int((cell_r > 0).sum())
+    n_sig_pos = sum(1 for c in cell_rows if c[3] > 0 and c[4] < 0.05)
+    print("  PRIMARY -- within-cell Spearman(max rel-CRLB, nMSE), "
+          "aggregated over cells:")
+    if n_cells:
+        print(f"    median r = {np.median(cell_r):.3f}  "
+              f"mean r = {cell_r.mean():.3f}  "
+              f"(cells: {n_cells}, positive r: {n_pos}/{n_cells}, "
+              f"p<0.05 & r>0: {n_sig_pos}/{n_cells})")
+    else:
+        print("    (no cells with n > 10 -- cannot aggregate)")
+    for fam, exc, dt, r_cell, p_cell, n_cell in cell_rows:
+        print(f"      {fam:12s} {exc:12s} dt={dt:<5g} "
+              f"r={r_cell:+.3f} (p={p_cell:.1e}, n={n_cell})")
+
+    print("  SECONDARY (pooled across cells -- confounded by between-cell "
+          "structure; see within-cell above):")
     r, p = spearmanr(crlb, nmse)
-    print(f"  Spearman(max rel-CRLB, nMSE): r={r:.3f} (p={p:.1e})")
+    print(f"    Spearman(max rel-CRLB, nMSE): r={r:.3f} (p={p:.1e})")
     r2, p2 = spearmanr(cond, nmse)
-    print(f"  Spearman(log10 FIM cond, nMSE): r={r2:.3f} (p={p2:.1e})")
+    print(f"    Spearman(log10 FIM cond, nMSE): r={r2:.3f} (p={p2:.1e})")
     for fam in FAMILIES:
         m = fams == fam
         if m.sum() > 10:
             rf, pf = spearmanr(crlb[m], nmse[m])
-            print(f"    {fam}: r={rf:.3f} (p={pf:.1e}, n={int(m.sum())})")
+            print(f"      {fam}: r={rf:.3f} (p={pf:.1e}, n={int(m.sum())})")
 
-    print("  quartiles of max rel-CRLB -> mean nMSE:")
-    for i, (mm, mn, n) in enumerate(quartile_table(crlb, nmse), 1):
-        print(f"    Q{i}: metric~{mm:.3g}  nMSE={mn:.4f}  (n={n})")
+    print("  quartiles of max rel-CRLB -> nMSE (mean is heavy-tail-dominated; "
+          "median is the defensible summary):")
+    for i, (mm, mn, md, n) in enumerate(quartile_table(crlb, nmse), 1):
+        if n == 0:
+            print(f"    Q{i}: (empty bin, n=0)")
+            continue
+        print(f"    Q{i}: metric~{mm:.3g}  mean nMSE={mn:.4f}  "
+              f"median nMSE={md:.4f}  (n={n})")
 
 
 if __name__ == "__main__":

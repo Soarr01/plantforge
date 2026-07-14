@@ -33,14 +33,32 @@ def test_quartile_table_monotone_construction():
     nmse = metric * 2.0                   # perfectly increasing with metric
     rows = quartile_table(metric, nmse)
     assert len(rows) == 4
-    assert all(rows[i][1] < rows[i + 1][1] for i in range(3))
-    assert sum(r[2] for r in rows) == 8
+    # rows: (bin mean metric, bin mean nmse, bin median nmse, bin count)
+    assert all(rows[i][1] < rows[i + 1][1] for i in range(3))   # mean col
+    assert all(rows[i][2] < rows[i + 1][2] for i in range(3))   # median col
+    assert sum(r[3] for r in rows) == 8
     print("  PASS  test_quartile_table_monotone_construction")
+
+
+def test_quartile_table_empty_bin_guard():
+    # Heavy ties: quartile cut points can coincide, leaving a bin empty.
+    # Must not raise and must not report NaN for populated bins.
+    metric = np.array([1.0] * 6 + [2.0] * 2)
+    nmse = np.array([10.0] * 6 + [20.0] * 2)
+    rows = quartile_table(metric, nmse)
+    assert len(rows) == 4
+    for mm, mn, md, n in rows:
+        if n == 0:
+            continue
+        assert not np.isnan(mm) and not np.isnan(mn) and not np.isnan(md)
+    assert sum(r[3] for r in rows) == 8
+    print("  PASS  test_quartile_table_empty_bin_guard")
 
 
 def _run_all():
     test_qry_stats_reconstruct_batch_nmse()
     test_quartile_table_monotone_construction()
+    test_quartile_table_empty_bin_guard()
 
 
 if __name__ == "__main__":
