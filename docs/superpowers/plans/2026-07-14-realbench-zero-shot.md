@@ -16,8 +16,9 @@
 - Trained-rate targets are `corpus.RATES = [0.10, 0.05, 0.02]` — reuse this constant, do not redefine it.
 - Context window length is `evaluate.D = evaluate.T_CTX + evaluate.T_QRY = 224` — reuse this constant, do not redefine it.
 - `WINDOW_CAP = 8` windows per dataset (pooled across records where a dataset has multiple test records).
-- This project (`/data/nas07_new/PersonalData/phuocthien/plantforge`) has **no git repository**. Do not run any `git` command. Task completion is marked by tests passing, not by commits.
-- Run all commands from `/data/nas07_new/PersonalData/phuocthien` (the parent of the `plantforge` package), with `PLANTFORGE_DATA=/data/nas07_new/PersonalData/phuocthien/plantforge_data` set — same convention as the existing `corpus`/`evaluate` runs.
+- Git repo root is `/data/nas07_new/PersonalData/phuocthien/plantforge` (root commit `00a02c6`, baseline = pre-existing extracted+fixed project). Work happens on branch `realbench-zero-shot`, never on `main`. Commit at the end of each task as normal.
+- Two different working directories matter, because `plantforge` is both the git repo root and a Python package: run `git` commands with cwd `/data/nas07_new/PersonalData/phuocthien/plantforge`; run `python -m plantforge...` commands with cwd `/data/nas07_new/PersonalData/phuocthien` (the package's parent — required for `python -m` to resolve the `plantforge` package).
+- Set `PLANTFORGE_DATA=/data/nas07_new/PersonalData/phuocthien/plantforge_data` for any command that touches `evaluate.CKPT_DIR` (Tasks 2-4) — same convention as the existing `corpus`/`evaluate` runs.
 
 ---
 
