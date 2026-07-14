@@ -177,8 +177,10 @@ rate (20 Hz), held-out excitations (chirp, closedloop).
   Bouc-Wen and WienerHammerBenchMark out of scope — no pip loader / record too short,
   respectively). Classical ARX still beats both zero-shot transformers on these real
   plants, so "turns the incumbent into the validator" is not yet a settled claim.
-- **forgi86 lineage** (LCSS'23/IFAC'24/RAL'25) — regenerates private WH-only data per
-  paper; the corpus's demand proof.
+- **forgi86 lineage** (Forgione et al., L-CSS'23; Piga et al., IFAC'24) — regenerates
+  private WH-only data per paper; the corpus's demand proof. (An earlier draft of this
+  README also cited a "RAL'25" entry in this lineage; it could not be independently
+  verified and has been removed rather than left unchecked.)
 
 ## Layout
 | file | role |
