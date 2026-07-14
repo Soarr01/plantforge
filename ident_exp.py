@@ -16,6 +16,17 @@ cells. The pooled-across-cells Spearman (and its per-family breakdown) is kept
 as a SECONDARY, clearly-labeled diagnostic, since it mixes within-cell signal
 with between-cell confounds.
 
+Two instance-level confounds can distort the within-cell r and are controlled
+for, per reviewer request:
+1. Query-horizon power (den) confound: per-instance nMSE = num/den, and a
+   near-zero den (query horizon nearly flat after normalization) mechanically
+   inflates nMSE regardless of identifiability. `filter_low_power` drops each
+   cell's bottom decile of den and the correlation is recomputed
+   ("power-controlled").
+2. Annotation dynamic range: cells where max rel-CRLB is nearly constant
+   contribute pure rank noise to r. Per-cell rel-CRLB IQR is reported, and a
+   "range-filtered" aggregate excludes near-zero-IQR cells.
+
 The quartile table reports both bin-mean and bin-median nMSE: per-instance
 nMSE is heavy-tailed (can reach ~1e9 for near-flat query-horizon instances,
 e.g. deadzone outputs, that can dominate a bin's mean), so the median is the
@@ -84,6 +95,15 @@ def quartile_table(metric: np.ndarray, nmse: np.ndarray):
     return rows
 
 
+def filter_low_power(crlb, v, den, q=0.1):
+    """Drop instances in the bottom q-quantile of query-horizon power (den):
+    near-flat query horizons mechanically explode nMSE = num/den and are a
+    live confound for the identifiability correlation."""
+    thresh = np.quantile(den, q)
+    keep = den > thresh
+    return crlb[keep], v[keep], den[keep]
+
+
 def _corpus_models(seeds):
     models = []
     for s in seeds:
@@ -118,7 +138,7 @@ def main():
           f"(corpus model, {len(models)} seed(s), {n_per_cell}/cell) ===")
 
     fams, crlbs, conds, nmses = [], [], [], []
-    cell_rows = []  # (fam, exc, dt, r_cell, p_cell, n)
+    cell_rows = []  # (fam, exc, dt, r_cell, p_cell, n, r_pow, p_pow, n_pow, iqr)
     for fam in FAMILIES:
         for exc in EXCITATIONS:
             for dt in USABLE_DTS:
@@ -132,15 +152,29 @@ def main():
                 v = _score_cell(models, u, y)
                 crlb = shard["rel_crlb"][:n_per_cell].max(dim=1).values.numpy()
                 cond = shard["log10_cond"][:n_per_cell].numpy()
+                # Query-horizon power, model-independent (no forward pass needed):
+                # same normalization qry_stats uses for `den`, computed once per cell.
+                with torch.no_grad():
+                    _, y_n = _norm(u, y)
+                den = (y_n[:, T_CTX:] ** 2).mean(dim=1).cpu().numpy()
                 fams += [fam] * len(v)
                 crlbs.append(crlb); conds.append(cond); nmses.append(v)
 
-                ok_cell = np.isfinite(crlb) & np.isfinite(v)
-                crlb_f, v_f = crlb[ok_cell], v[ok_cell]
+                # Deliberately omits `cond`: cond isn't used in the within-cell stat.
+                ok_cell = np.isfinite(crlb) & np.isfinite(v) & np.isfinite(den)
+                crlb_f, v_f, den_f = crlb[ok_cell], v[ok_cell], den[ok_cell]
                 n_cell = len(v_f)
                 if n_cell > 10:
                     r_cell, p_cell = spearmanr(crlb_f, v_f)
-                    cell_rows.append((fam, exc, dt, r_cell, p_cell, n_cell))
+                    iqr = float(np.subtract(*np.percentile(crlb_f, [75, 25])))
+                    crlb_p, v_p, _ = filter_low_power(crlb_f, v_f, den_f)
+                    n_pow = len(v_p)
+                    if n_pow > 10:
+                        r_pow, p_pow = spearmanr(crlb_p, v_p)
+                    else:
+                        r_pow, p_pow = float("nan"), float("nan")
+                    cell_rows.append((fam, exc, dt, r_cell, p_cell, n_cell,
+                                       r_pow, p_pow, n_pow, iqr))
 
     crlb = np.concatenate(crlbs); cond = np.concatenate(conds)
     nmse = np.concatenate(nmses); fams = np.array(fams)
@@ -158,12 +192,32 @@ def main():
         print(f"    median r = {np.median(cell_r):.3f}  "
               f"mean r = {cell_r.mean():.3f}  "
               f"(cells: {n_cells}, positive r: {n_pos}/{n_cells}, "
-              f"p<0.05 & r>0: {n_sig_pos}/{n_cells})")
+              f"p<0.05 & r>0: {n_sig_pos}/{n_cells} "
+              f"(descriptive; no multiplicity correction -- "
+              f"~2/40 expected by chance))")
+        cell_r_pow = np.array([c[6] for c in cell_rows if np.isfinite(c[6])])
+        if len(cell_r_pow):
+            print(f"    power-controlled: median r = {np.median(cell_r_pow):.3f}  "
+                  f"mean r = {cell_r_pow.mean():.3f}  "
+                  f"(excl. bottom-decile den per cell)")
+        else:
+            print("    power-controlled: (no cells with n > 10 after filtering)")
+        iqr_keep = [c[3] for c in cell_rows if c[9] > 1e-6]
+        n_iqr_keep = len(iqr_keep)
+        if n_iqr_keep:
+            print(f"    range-filtered: median r = {np.median(iqr_keep):.3f}  "
+                  f"(cells with rel-CRLB IQR > 1e-6: {n_iqr_keep}/{n_cells})")
+        else:
+            print(f"    range-filtered: (no cells with rel-CRLB IQR > 1e-6: "
+                  f"0/{n_cells})")
     else:
         print("    (no cells with n > 10 -- cannot aggregate)")
-    for fam, exc, dt, r_cell, p_cell, n_cell in cell_rows:
+    for fam, exc, dt, r_cell, p_cell, n_cell, r_pow, p_pow, n_pow, iqr in cell_rows:
+        pow_str = (f"r_pow={r_pow:+.3f} (p={p_pow:.1e}, n={n_pow})"
+                   if np.isfinite(r_pow) else "r_pow=n/a")
         print(f"      {fam:12s} {exc:12s} dt={dt:<5g} "
-              f"r={r_cell:+.3f} (p={p_cell:.1e}, n={n_cell})")
+              f"r={r_cell:+.3f} (p={p_cell:.1e}, n={n_cell})  "
+              f"{pow_str}  IQR={iqr:.3g}")
 
     print("  SECONDARY (pooled across cells -- confounded by between-cell "
           "structure; see within-cell above):")

@@ -8,7 +8,8 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 import numpy as np
 import torch
 
-from plantforge.ident_exp import qry_stats, nmse_per_instance, quartile_table
+from plantforge.ident_exp import (qry_stats, nmse_per_instance, quartile_table,
+                                   filter_low_power)
 from plantforge.evaluate import InContextSysID, D, DEV
 from plantforge.realbench import nmse_on_windows
 
@@ -55,10 +56,26 @@ def test_quartile_table_empty_bin_guard():
     print("  PASS  test_quartile_table_empty_bin_guard")
 
 
+def test_filter_low_power_drops_bottom_decile():
+    n = 20
+    den = np.arange(1, n + 1, dtype=float)         # 1..20
+    crlb = np.arange(100.0, 100.0 + n)              # 100..119, aligned to den
+    v = np.arange(200.0, 200.0 + n)                 # 200..219, aligned to den
+    crlb_f, v_f, den_f = filter_low_power(crlb, v, den, q=0.1)
+    # bottom decile of 1..20 -> the two smallest (den=1, den=2) dropped
+    assert len(den_f) == n - 2
+    assert np.array_equal(den_f, den[2:])
+    assert np.array_equal(crlb_f, crlb[2:])
+    assert np.array_equal(v_f, v[2:])
+    assert den_f.min() == 3
+    print("  PASS  test_filter_low_power_drops_bottom_decile")
+
+
 def _run_all():
     test_qry_stats_reconstruct_batch_nmse()
     test_quartile_table_monotone_construction()
     test_quartile_table_empty_bin_guard()
+    test_filter_low_power_drops_bottom_decile()
 
 
 if __name__ == "__main__":
