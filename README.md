@@ -190,4 +190,17 @@ Design docs and implementation plans: `docs/superpowers/specs/`, `docs/superpowe
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+Code: MIT — see [`LICENSE`](LICENSE). Corpus data (generated shards,
+distributed separately via Hugging Face — see below): CC BY 4.0 — see
+[`LICENSE-DATA`](LICENSE-DATA).
+
+## Dataset card / datasheet
+
+Full "Datasheets for Datasets"-style documentation of the corpus (motivation,
+composition, collection process, uses, distribution, maintenance):
+[`docs/DATASHEET.md`](docs/DATASHEET.md).
+
+The reference corpus (240,000 instances, 583 MB, `--instances 4000`) is
+regenerable locally via `python -m plantforge.corpus --instances 4000`, or
+downloadable pre-generated from Hugging Face: `<HF dataset repo — TBD,
+publish pending>`.
