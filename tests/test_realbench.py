@@ -71,6 +71,24 @@ def test_best_decimation_factor_none_when_native_already_coarser():
     print("  PASS  test_best_decimation_factor_none_when_native_already_coarser")
 
 
+def test_decimate_to_factor_prime_terminates():
+    t = np.linspace(0, 10, 20000)
+    x = np.sin(2 * np.pi * 0.5 * t)
+    out = decimate_to_factor(x, 13)      # prime > 10, no clean small-factor split
+    assert np.isfinite(out).all()
+    assert abs(len(out) - len(x) // 13) <= 2
+    print("  PASS  test_decimate_to_factor_prime_terminates")
+
+
+def test_best_decimation_factor_no_crash_when_native_much_finer():
+    result = best_decimation_factor(0.001, RATES)   # 1kHz, finer than every target
+    assert result is not None
+    q, achieved_dt = result
+    assert q >= 1
+    assert np.isfinite(achieved_dt)
+    print("  PASS  test_best_decimation_factor_no_crash_when_native_much_finer")
+
+
 def test_pooled_windows_caps_across_records():
     rec1 = (np.zeros(D * 2, dtype=np.float64), np.zeros(D * 2, dtype=np.float64))
     rec2 = (np.ones(D * 5, dtype=np.float64), np.ones(D * 5, dtype=np.float64))
@@ -89,6 +107,8 @@ def _run_all():
     test_decimate_to_factor_chained()
     test_best_decimation_factor_matches_silverbox()
     test_best_decimation_factor_none_when_native_already_coarser()
+    test_decimate_to_factor_prime_terminates()
+    test_best_decimation_factor_no_crash_when_native_much_finer()
     test_pooled_windows_caps_across_records()
 
 

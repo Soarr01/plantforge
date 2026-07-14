@@ -18,50 +18,47 @@ WINDOW_CAP = 8
 
 
 def decimate_to_factor(x: np.ndarray, q: int) -> np.ndarray:
-    """Anti-aliased decimation by integer factor q, chaining calls in steps
-    of at most 10 (scipy.signal.decimate recommends q<=13 per call)."""
+    """Anti-aliased decimation by integer factor q. Chains calls in steps of
+    at most 10 when q factors evenly into such steps (scipy.signal.decimate
+    recommends q<=13 per call); when q (or what remains of it) has no
+    divisor <=10 other than 1 -- e.g. a prime like 13, 17, 23 -- decimates
+    by the remaining factor in a single call instead of looping forever
+    looking for a clean split that doesn't exist."""
     factors = []
     remaining = q
-
-    # Greedy factorization: find largest divisor of remaining that's <= 10
     while remaining > 1:
-        factor_found = False
-        for f in range(min(remaining, 10), 0, -1):
+        step = None
+        for f in range(min(remaining, 10), 1, -1):
             if remaining % f == 0:
-                factors.append(f)
-                remaining //= f
-                factor_found = True
+                step = f
                 break
-        if not factor_found:
-            # Shouldn't happen, but handle gracefully
-            factors.append(remaining)
-            remaining = 1
-
+        if step is None:
+            step = remaining
+        factors.append(step)
+        remaining //= step
     out = x
     for f in factors:
-        if f > 1:
-            out = scipy.signal.decimate(out, f, ftype="iir", zero_phase=True)
+        out = scipy.signal.decimate(out, f, ftype="iir", zero_phase=True)
     return out
 
 
 def best_decimation_factor(native_dt: float, target_dts=RATES):
-    """Integer decimation factor q>=1 that brings native_dt closest to one of
-    target_dts. Only considers decimating DOWN in rate (q>=1, native_dt*q ~
-    target); returns None if native_dt is already coarser than every target
-    (nothing to decimate to -- the Cascaded_Tanks case)."""
+    """Integer decimation factor q>=1 that brings native_dt down to the
+    FINEST (smallest dt) trained rate reachable by decimating. Finer
+    retains more of the real signal's bandwidth than coarser, so among
+    reachable targets the finest is preferred outright -- picking by raw
+    abs(dt) error instead favors coarse targets by round-off coincidence
+    for some native rates (e.g. native_dt=0.0016384s lands closer in raw
+    error to the 0.10s target than to the 0.02s target, despite 0.02s
+    being reachable and far more informative). Returns None if native_dt
+    is already coarser than every target (nothing to decimate to -- the
+    Cascaded_Tanks case)."""
     if native_dt >= max(target_dts):
         return None
-    best = None
-    for target in target_dts:
-        q = max(1, round(target / native_dt))
-        # Prefer q <= 13 for single decimation step (scipy recommendation)
-        if q > 13:
-            continue
-        achieved = native_dt * q
-        err = abs(achieved - target)
-        if best is None or err < best[2]:
-            best = (q, achieved, err)
-    return best[0], best[1]
+    finest = min(target_dts)
+    q = max(1, round(finest / native_dt))
+    achieved = native_dt * q
+    return q, achieved
 
 
 def make_windows(u: np.ndarray, y: np.ndarray, cap: int = WINDOW_CAP):
