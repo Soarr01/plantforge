@@ -28,6 +28,8 @@ T_CTX, T_QRY = 192, 32
 D = T_CTX + T_QRY
 CKPT_DIR = pathlib.Path(os.environ.get("PLANTFORGE_DATA", "/home/coder/plantforge_data"))
 SEED = int(os.environ.get("PF_SEED", "0"))   # training seed: init + data pool draws
+WIDTH = int(os.environ.get("PF_WIDTH", "160"))    # InContextSysID d
+LAYERS = int(os.environ.get("PF_LAYERS", "5"))    # InContextSysID layers
 HOLD_FAMILY = "backlash"            # held-out family (the hardest per the gate)
 TRAIN_RATES = [0.10, 0.02]          # held-out rate: 0.05
 TRAIN_EXC = ["multisine", "prbs"]   # held-out excitation: chirp, closedloop
@@ -69,6 +71,16 @@ POOL_N = 240                        # fresh batches per run; iterated (data gen 
                                     # wall-clock otherwise — reuse is fine for in-context)
 
 
+def _ckpt_name(mode: str) -> str:
+    """eval_{mode}_s{SEED}.pt for the default architecture (160/5) --
+    unchanged from before this plan, so the already-trained default
+    checkpoints stay loadable with zero retraining. Non-default
+    width/layers get an explicit suffix so they never collide with the
+    default-architecture name."""
+    suffix = "" if (WIDTH, LAYERS) == (160, 5) else f"_d{WIDTH}L{LAYERS}"
+    return f"eval_{mode}_s{SEED}{suffix}.pt"
+
+
 def build_pool(mode, run_salt):
     pool = []
     i, tries = 0, 0
@@ -106,8 +118,8 @@ def nmse(model, family, exc, dt, seeds=range(900, 906), B=96):
 
 def run(mode: str, total_steps=10000, budget_s=500.0):
     torch.manual_seed(SEED)
-    ck_path = CKPT_DIR / f"eval_{mode}_s{SEED}.pt"
-    model = InContextSysID().to(DEV)
+    ck_path = CKPT_DIR / _ckpt_name(mode)
+    model = InContextSysID(d=WIDTH, layers=LAYERS).to(DEV)
     opt = torch.optim.Adam(model.parameters(), lr=5e-4)
     done = 0
     if ck_path.exists():
