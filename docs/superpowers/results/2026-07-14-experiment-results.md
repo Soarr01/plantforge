@@ -148,7 +148,15 @@ dropped as non-finite).
   wh_only is *better* (0.0141±0.0016 vs corpus 0.0285±0.0021, non-overlapping
   the other way) — worth flagging rather than smoothing over, since it
   contradicts the "corpus training always helps" framing on at least one
-  cell.
+  cell. **Statistical caveat:** non-overlapping ±1std is a descriptive
+  heuristic across 11 simultaneous cell comparisons, not a
+  multiplicity-corrected test (the same caveat already applied to the
+  identifiability experiment's within-cell aggregate below). At n=5 seeds,
+  std is a conservative bar relative to the standard error of the mean, and
+  the load-bearing cells (Silverbox 0.958 vs 0.331, Cascaded_Tanks 0.394 vs
+  0.084) clear it by a wide margin, so the headline conclusion is not
+  multiplicity-sensitive — but the count "10 of 11" should be read as
+  descriptive, the same way the ident_exp positive-cell counts are.
 - **ARX is a strong baseline that both neural models lose to on several
   cells, and it is not uniformly weaker than the "hard" cases.** ARX beats
   both corpus and wh_only outright on held-out excitation chirp (0.0039 vs
