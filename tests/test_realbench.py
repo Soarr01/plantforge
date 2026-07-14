@@ -100,6 +100,13 @@ def test_pooled_windows_caps_across_records():
     print("  PASS  test_pooled_windows_caps_across_records")
 
 
+def test_pooled_windows_none_when_all_records_too_short():
+    rec1 = (np.zeros(D - 1, dtype=np.float64), np.zeros(D - 1, dtype=np.float64))
+    rec2 = (np.ones(D - 1, dtype=np.float64), np.ones(D - 1, dtype=np.float64))
+    assert pooled_windows([rec1, rec2]) is None
+    print("  PASS  test_pooled_windows_none_when_all_records_too_short")
+
+
 def test_nmse_on_windows_finite_untrained_model():
     from plantforge.evaluate import InContextSysID
     model = InContextSysID().to(DEV)
@@ -126,6 +133,7 @@ def _run_all():
     test_decimate_to_factor_prime_terminates()
     test_best_decimation_factor_no_crash_when_native_much_finer()
     test_pooled_windows_caps_across_records()
+    test_pooled_windows_none_when_all_records_too_short()
     test_nmse_on_windows_finite_untrained_model()
     test_load_model_missing_checkpoint_returns_none()
 

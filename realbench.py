@@ -52,7 +52,16 @@ def best_decimation_factor(native_dt: float, target_dts=RATES):
     error to the 0.10s target than to the 0.02s target, despite 0.02s
     being reachable and far more informative). Returns None if native_dt
     is already coarser than every target (nothing to decimate to -- the
-    Cascaded_Tanks case)."""
+    Cascaded_Tanks case).
+
+    Edge case (not hit by any dataset used in this project): if native_dt
+    is coarser than the finest target but still finer than the coarsest
+    (e.g. native_dt=0.06 against target_dts=[0.10, 0.05, 0.02]),
+    round(finest / native_dt) can round to 0, which is clamped to q=1 --
+    i.e. "no decimation applied" -- even though the achieved_dt returned
+    (== native_dt) doesn't actually land near any target in target_dts.
+    Callers passing a native_dt in that middle range should not rely on
+    this function's "reachable target" guarantee."""
     if native_dt >= max(target_dts):
         return None
     finest = min(target_dts)
@@ -124,7 +133,13 @@ def silverbox_windows():
     import nonlinear_benchmarks as nb
     _, test = nb.Silverbox()
     native_dt = test[0].sampling_time
-    q, achieved_dt = best_decimation_factor(native_dt, RATES)
+    result = best_decimation_factor(native_dt, RATES)
+    if result is None:
+        raise RuntimeError(
+            f"Silverbox native_dt={native_dt} is already coarser than every "
+            f"trained rate {RATES} -- cannot decimate down to any of them"
+        )
+    q, achieved_dt = result
     records = []
     for rec in test:
         u = decimate_to_factor(np.asarray(rec.u, dtype=np.float64), q)
@@ -157,6 +172,22 @@ def wienerhammer_status():
     return duration, min_needed
 
 
+def _report_dataset(header: str, windows, skip_reason: str, models):
+    """Print `header`, then either a SKIPPED line (if windows is None) or,
+    for each non-None model, its nMSE on the given windows. Shared by the
+    Silverbox and Cascaded_Tanks blocks in main()."""
+    print(header)
+    if windows is None:
+        print(f"    SKIPPED -- {skip_reason}")
+        return
+    u, y = windows
+    for name, model in models.items():
+        if model is None:
+            continue
+        v = nmse_on_windows(model, u, y)
+        print(f"    {name} model: nMSE={v:.4f}  (n={u.shape[0]} windows)")
+
+
 def main():
     print("=== real-plant zero-shot transfer (in-context nMSE) ===")
     models = {name: load_model(f"eval_{name}.pt") for name in ("wh_only", "corpus")}
@@ -166,29 +197,15 @@ def main():
               f"run `python -m plantforge.evaluate <mode>` first)")
 
     sb_windows, sb_dt, sb_q = silverbox_windows()
-    print(f"  Silverbox (decimated {sb_q}x -> dt={sb_dt:.4f}s, ~50Hz-like):")
-    if sb_windows is None:
-        print("    SKIPPED -- no full window available after decimation")
-    else:
-        u, y = sb_windows
-        for name, model in models.items():
-            if model is None:
-                continue
-            v = nmse_on_windows(model, u, y)
-            print(f"    {name} model: nMSE={v:.4f}  (n={u.shape[0]} windows)")
+    _report_dataset(
+        f"  Silverbox (decimated {sb_q}x -> dt={sb_dt:.4f}s, ~50Hz-like):",
+        sb_windows, "no full window available after decimation", models)
 
     ct_windows, ct_dt = cascaded_tanks_windows()
-    print(f"  Cascaded_Tanks (native dt={ct_dt:.2f}s -- "
-          f"{ct_dt / max(RATES):.0f}x coarser than trained range, EXTRAPOLATION):")
-    if ct_windows is None:
-        print("    SKIPPED -- record too short for one context window")
-    else:
-        u, y = ct_windows
-        for name, model in models.items():
-            if model is None:
-                continue
-            v = nmse_on_windows(model, u, y)
-            print(f"    {name} model: nMSE={v:.4f}  (n={u.shape[0]} windows)")
+    _report_dataset(
+        f"  Cascaded_Tanks (native dt={ct_dt:.2f}s -- "
+        f"{ct_dt / max(RATES):.0f}x coarser than trained range, EXTRAPOLATION):",
+        ct_windows, "record too short for one context window", models)
 
     wh_duration, wh_min_needed = wienerhammer_status()
     print(f"  WienerHammerBenchMark: SKIPPED -- record duration "
