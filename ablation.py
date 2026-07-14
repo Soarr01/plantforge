@@ -18,7 +18,6 @@ VARIANTS = [
     {"name": "shallow", "width": 160, "layers": 2},
     {"name": "deep", "width": 160, "layers": 8},
 ]
-TOTAL_STEPS = 10000
 
 
 def param_count(width: int, layers: int) -> int:

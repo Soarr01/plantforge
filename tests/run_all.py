@@ -3,6 +3,7 @@ import sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 from plantforge.tests import (
     test_plantforge, test_realbench, test_aggregate, test_baselines, test_ident_exp,
+    test_ablation,
 )
 
 
@@ -17,6 +18,8 @@ def main():
     test_baselines._run_all()
     print("PLANTFORGE ident_exp -- offline tests:")
     test_ident_exp._run_all()
+    print("PLANTFORGE ablation -- offline tests:")
+    test_ablation._run_all()
 
 
 if __name__ == "__main__":
