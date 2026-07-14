@@ -311,7 +311,7 @@ def load_model(ckpt_name: str):
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `cd /data/nas07_new/PersonalData/phuocthien && python -m plantforge.tests.test_realbench`
-Expected: all 9 `PASS` lines printed, exit code 0.
+Expected: all 11 `PASS` lines printed, exit code 0. (Task 1 originally shipped 7 tests, but its review-driven fix added 2 more — `test_decimate_to_factor_prime_terminates` and `test_best_decimation_factor_no_crash_when_native_much_finer` — so the baseline going into this task is 9, not 7; this task's 2 new tests bring the total to 11.)
 
 ---
 
