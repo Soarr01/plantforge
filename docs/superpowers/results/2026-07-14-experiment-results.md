@@ -140,7 +140,7 @@ dropped as non-finite).
 
 - **The corpus-vs-wh_only gap mostly survives error bars, with one clean
   exception.** Using mean±1std as an interval, corpus beats wh_only with
-  non-overlapping bands on 9 of 11 held-out cells (all three backlash dts,
+  non-overlapping bands on 10 of 11 held-out cells (all three backlash dts,
   both held-out excitations, stribeck/boucwen/drivetrain rate variants, and
   both real-plant benchmarks — most dramatically Silverbox: wh_only
   0.958±0.217 vs corpus 0.331±0.040, and Cascaded_Tanks: wh_only 0.394±0.081
@@ -160,7 +160,24 @@ dropped as non-finite).
   just "hard for everyone" — a simple linear context-fit is *better* than
   both trained transformers on several distribution shifts, which should
   temper any claim that in-context transformers are uniformly stronger
-  general-purpose identifiers.
+  general-purpose identifiers. **Protocol note (verified by review):** ARX
+  and the transformer are evaluated under an identical protocol — same
+  windows, same normalization, same 192/32 context/query split, neither sees
+  query-horizon ground truth. ARX fits a linear model per window (order
+  k∈{2,4,8} selected on held-out context samples); the transformer adapts
+  in-context via a frozen forward pass — both methods "look at the context
+  and adapt," so this is not an artifact of unfair per-window fitting. On
+  rate-shifted and real-plant cells specifically, ARX's per-window re-fit at
+  the test rate makes it structurally immune to the sample-rate mismatch the
+  frozen transformer must extrapolate through (most acute on Cascaded_Tanks,
+  a 40x rate extrapolation for the transformer) — this is a genuine
+  limitation of the frozen in-context approach, not a comparison bug.
+  **Sample-size note:** real-plant nMSE is computed over ≤8 non-overlapping
+  windows (`WINDOW_CAP=8`); ARX/NARX2 there are single deterministic
+  evaluations, whereas the transformer ±std reflects 5-seed model variance on
+  the same fixed windows. The 30x–300x ARX margins far exceed this variance,
+  but the real-plant numbers are not seed-averaged and should be reported as
+  such.
 - **NARX2 diverges broadly in free-run and should not be treated as a
   comparable number** — only on real-plant Silverbox does it produce a sane
   nMSE (0.0028, matching ARX); every other cell is in the 1e10–1e11 range,
