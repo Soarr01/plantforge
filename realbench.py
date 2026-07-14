@@ -115,3 +115,43 @@ def load_model(ckpt_name: str):
     model.load_state_dict(ck["model"])
     model.eval()
     return model
+
+
+def silverbox_windows():
+    """Load Silverbox's test records, decimate to the nearest trained rate,
+    and pool windows across all test records. Returns
+    (windows_or_None, achieved_dt, decimation_factor)."""
+    import nonlinear_benchmarks as nb
+    _, test = nb.Silverbox()
+    native_dt = test[0].sampling_time
+    q, achieved_dt = best_decimation_factor(native_dt, RATES)
+    records = []
+    for rec in test:
+        u = decimate_to_factor(np.asarray(rec.u, dtype=np.float64), q)
+        y = decimate_to_factor(np.asarray(rec.y, dtype=np.float64), q)
+        records.append((u, y))
+    return pooled_windows(records), achieved_dt, q
+
+
+def cascaded_tanks_windows():
+    """Load Cascaded_Tanks' test record at its native rate (already coarser
+    than every trained rate, so no decimation is applied). Returns
+    (windows_or_None, native_dt)."""
+    import nonlinear_benchmarks as nb
+    _, test = nb.Cascaded_Tanks()
+    native_dt = test.sampling_time
+    u = np.asarray(test.u, dtype=np.float64)
+    y = np.asarray(test.y, dtype=np.float64)
+    return make_windows(u, y), native_dt
+
+
+def wienerhammer_status():
+    """WienerHammerBenchMark's total physical duration is shorter than one
+    context window at any trained rate -- report why it's skipped rather
+    than evaluate it. Returns (duration_seconds, min_seconds_needed)."""
+    import nonlinear_benchmarks as nb
+    _, test = nb.WienerHammerBenchMark()
+    native_dt = test.sampling_time
+    duration = len(test.u) * native_dt
+    min_needed = D * min(RATES)
+    return duration, min_needed
