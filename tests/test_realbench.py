@@ -11,7 +11,7 @@ import torch
 
 from plantforge.realbench import (
     decimate_to_factor, best_decimation_factor, make_windows,
-    pooled_windows, D, DEV,
+    pooled_windows, nmse_on_windows, load_model, D, DEV,
 )
 from plantforge.corpus import RATES
 
@@ -100,6 +100,22 @@ def test_pooled_windows_caps_across_records():
     print("  PASS  test_pooled_windows_caps_across_records")
 
 
+def test_nmse_on_windows_finite_untrained_model():
+    from plantforge.evaluate import InContextSysID
+    model = InContextSysID().to(DEV)
+    model.eval()
+    u = torch.randn(4, D, device=DEV)
+    y = torch.randn(4, D, device=DEV)
+    v = nmse_on_windows(model, u, y)
+    assert np.isfinite(v)
+    print("  PASS  test_nmse_on_windows_finite_untrained_model")
+
+
+def test_load_model_missing_checkpoint_returns_none():
+    assert load_model("eval_this_checkpoint_does_not_exist.pt") is None
+    print("  PASS  test_load_model_missing_checkpoint_returns_none")
+
+
 def _run_all():
     test_make_windows_shapes_and_cap()
     test_make_windows_too_short_returns_none()
@@ -110,6 +126,8 @@ def _run_all():
     test_decimate_to_factor_prime_terminates()
     test_best_decimation_factor_no_crash_when_native_much_finer()
     test_pooled_windows_caps_across_records()
+    test_nmse_on_windows_finite_untrained_model()
+    test_load_model_missing_checkpoint_returns_none()
 
 
 if __name__ == "__main__":

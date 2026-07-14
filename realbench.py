@@ -91,3 +91,27 @@ def pooled_windows(records, cap: int = WINDOW_CAP):
     if not u_all:
         return None
     return torch.cat(u_all, dim=0), torch.cat(y_all, dim=0)
+
+
+def nmse_on_windows(model, u: torch.Tensor, y: torch.Tensor) -> float:
+    """Same nMSE formula as evaluate.nmse: query-horizon MSE normalized by
+    query-horizon variance, computed over a fixed batch of (u, y) windows."""
+    u_n, y_n = _norm(u, y)
+    with torch.no_grad():
+        pred = model(u_n, y_n)
+    return (((pred[:, T_CTX:] - y_n[:, T_CTX:]) ** 2).mean()
+            / (y_n[:, T_CTX:] ** 2).mean()).item()
+
+
+def load_model(ckpt_name: str):
+    """Load a trained InContextSysID checkpoint in eval mode, or None if the
+    checkpoint file doesn't exist (e.g. only one of corpus/wh_only has been
+    trained so far)."""
+    ck_path = CKPT_DIR / ckpt_name
+    if not ck_path.exists():
+        return None
+    model = InContextSysID().to(DEV)
+    ck = torch.load(ck_path, map_location=DEV)
+    model.load_state_dict(ck["model"])
+    model.eval()
+    return model
