@@ -155,3 +155,46 @@ def wienerhammer_status():
     duration = len(test.u) * native_dt
     min_needed = D * min(RATES)
     return duration, min_needed
+
+
+def main():
+    print("=== real-plant zero-shot transfer (in-context nMSE) ===")
+    models = {name: load_model(f"eval_{name}.pt") for name in ("wh_only", "corpus")}
+    missing = [name for name, m in models.items() if m is None]
+    if missing:
+        print(f"  (checkpoint(s) missing, skipped: {', '.join(missing)} -- "
+              f"run `python -m plantforge.evaluate <mode>` first)")
+
+    sb_windows, sb_dt, sb_q = silverbox_windows()
+    print(f"  Silverbox (decimated {sb_q}x -> dt={sb_dt:.4f}s, ~50Hz-like):")
+    if sb_windows is None:
+        print("    SKIPPED -- no full window available after decimation")
+    else:
+        u, y = sb_windows
+        for name, model in models.items():
+            if model is None:
+                continue
+            v = nmse_on_windows(model, u, y)
+            print(f"    {name} model: nMSE={v:.4f}  (n={u.shape[0]} windows)")
+
+    ct_windows, ct_dt = cascaded_tanks_windows()
+    print(f"  Cascaded_Tanks (native dt={ct_dt:.2f}s -- "
+          f"{ct_dt / max(RATES):.0f}x coarser than trained range, EXTRAPOLATION):")
+    if ct_windows is None:
+        print("    SKIPPED -- record too short for one context window")
+    else:
+        u, y = ct_windows
+        for name, model in models.items():
+            if model is None:
+                continue
+            v = nmse_on_windows(model, u, y)
+            print(f"    {name} model: nMSE={v:.4f}  (n={u.shape[0]} windows)")
+
+    wh_duration, wh_min_needed = wienerhammer_status()
+    print(f"  WienerHammerBenchMark: SKIPPED -- record duration "
+          f"({wh_duration:.2f}s) shorter than one context window at any "
+          f"trained rate (min {wh_min_needed:.2f}s) -- not evaluable zero-shot.")
+
+
+if __name__ == "__main__":
+    main()
