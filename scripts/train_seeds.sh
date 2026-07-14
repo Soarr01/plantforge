@@ -4,9 +4,11 @@
 # WITHOUT invoking evaluate.py (its pool build costs minutes even when
 # there is nothing left to train).
 set -uo pipefail
-cd /data/nas07_new/PersonalData/phuocthien
-export PLANTFORGE_DATA=${PLANTFORGE_DATA:-/data/nas07_new/PersonalData/phuocthien/plantforge_data}
-export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-6}
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PKG_PARENT="$(cd "$SCRIPT_DIR/../.." && pwd)"   # parent of the plantforge/ package
+cd "$PKG_PARENT"
+export PLANTFORGE_DATA=${PLANTFORGE_DATA:-"$PKG_PARENT/plantforge_data"}
+export CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
 export PYTHONUNBUFFERED=1
 export PF_BUDGET=${PF_BUDGET:-500}
 SEEDS=${SEEDS:-"0 1 2 3 4"}

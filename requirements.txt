@@ -1,0 +1,10 @@
+# Core (corpus generation, families/excitation/identifiability, tests)
+numpy==1.26.4
+scipy==1.17.1
+torch==2.11.0
+
+# Only needed for realbench.py / baselines.py's real-plant path (`... baselines real`)
+# and for downloading Silverbox/Cascaded_Tanks/WienerHammerBenchMark from
+# nonlinearbenchmark.org. Not required for corpus generation, training, or
+# the offline test suite.
+nonlinear_benchmarks==1.0.1
