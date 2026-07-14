@@ -17,6 +17,12 @@ included on trust.
 **Before this becomes a real submission**, at minimum:
 - Fill in real author names/affiliation and swap to `\usepackage[final]{neurips_2024}` for the camera-ready version (never for the anonymous review version).
 - Restore the dataset citation URL in `references.bib` (currently omitted for anonymity) in the camera-ready `\bibitem`.
+- **Anonymity of supplementary materials:** the paper PDF itself is clean
+  (audited), but this REPOSITORY is not — `README.md` and `docs/DATASHEET.md`
+  link the live Hugging Face dataset under a personally-identifying account
+  handle. If the repo (or any doc from it) is uploaded as supplementary
+  material for double-blind review, those links must be redacted or replaced
+  with an anonymized mirror first.
 - Expand Related Work if a reviewer asks for broader coverage — this draft cites only the four sources already load-bearing in this repo's README, not a full literature sweep.
 - Address the ablation/family-sweep limitations named in Section 5 if reviewers require them, or defend their absence.
 

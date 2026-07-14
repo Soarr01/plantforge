@@ -8,3 +8,6 @@ torch==2.11.0
 # nonlinearbenchmark.org. Not required for corpus generation, training, or
 # the offline test suite.
 nonlinear_benchmarks==1.0.1
+
+# Only needed for figures/make_figures.py (paper figures).
+matplotlib==3.10.9

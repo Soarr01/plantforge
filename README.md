@@ -149,7 +149,7 @@ writable directory for corpus shards / checkpoints:
 export PLANTFORGE_DATA=/path/to/plantforge_data
 
 python -m plantforge.tests.run_all                              # full offline test suite
-python -m plantforge.corpus --instances 4000                    # generate corpus shards (CPU, ~2h)
+python -m plantforge.corpus --instances 4000                    # generate corpus shards (CPU-bound; ~14h wall on a busy shared box, resumable)
 
 CUDA_VISIBLE_DEVICES=0 PF_SEED=0 python -m plantforge.evaluate headline   # WH-only model: the failure
 CUDA_VISIBLE_DEVICES=0 PF_SEED=0 python -m plantforge.evaluate corpus     # corpus model: the fix

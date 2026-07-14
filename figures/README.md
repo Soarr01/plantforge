@@ -1,7 +1,7 @@
 # Figures
 
 Regenerate all four from source: `python figures/make_figures.py` (from the
-repo root; needs `matplotlib`, already implied by `requirements.txt`'s deps).
+repo root; needs `matplotlib`, listed in `requirements.txt`).
 Every number plotted is transcribed verbatim from
 [`docs/superpowers/results/2026-07-14-experiment-results.md`](../docs/superpowers/results/2026-07-14-experiment-results.md)
 — the script computes nothing new, it only visualizes already-reviewed results.

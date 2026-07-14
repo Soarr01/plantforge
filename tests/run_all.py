@@ -1,4 +1,4 @@
-"""Run all.    python -m plantforge.tests.run_all   (from /home/coder)"""
+"""Run all.    python -m plantforge.tests.run_all   (from the package's parent directory)"""
 import sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 from plantforge.tests import (

@@ -38,12 +38,13 @@ annotations. Across 5 independently-seeded training runs, we show that a
 transformer trained on Wiener-Hammerstein-only data collapses off its training
 distribution (cross-family nMSE degradation of 93--118$\times$), and that training
 on PLANTFORGE's multi-axis corpus closes the rate and excitation gaps (to
-$\sim$1--2$\times$) while only halving, not closing, the cross-family gap
-(93$\times \to$14$\times$). We then subject this result to three checks a
+$\sim$1--2$\times$ for four of five families; the resonant drivetrain family
+improves but stays at 8$\times$) while only halving, not closing, the
+cross-family gap (93--118$\times \to$ 14--18$\times$). We then subject this result to three checks a
 released benchmark should survive but rarely does: (1) zero-shot transfer to two
 real measured plants (Silverbox, Cascaded Tanks), where corpus-trained models
 again outperform the Wiener-Hammerstein-only model, but a simple classical ARX
-baseline outperforms \emph{both} trained transformers by 30--300$\times$,
+baseline outperforms \emph{both} trained transformers by 11--342$\times$,
 tempering any claim of transformer superiority; (2) a within-cell statistical
 re-analysis showing that the corpus's own identifiability annotations do
 \emph{not} positively predict in-context prediction difficulty (median
@@ -84,12 +85,13 @@ it, and we report them in full rather than adjusting the narrative around them
 \paragraph{Summary of findings.}
 \begin{itemize}
   \item Multi-axis training on PLANTFORGE closes the rate and excitation transfer
-  gaps that Wiener-Hammerstein-only training leaves open, but only halves the
-  harder cross-family gap --- reported here as an open challenge, not a solved
-  problem (Section~\ref{sec:headline}).
+  gaps that Wiener-Hammerstein-only training leaves open (for four of five
+  families; the resonant drivetrain family improves but does not close), but
+  only halves the harder cross-family gap --- reported here as an open
+  challenge, not a solved problem (Section~\ref{sec:headline}).
   \item Zero-shot on two real plants, a corpus-trained model beats a
   Wiener-Hammerstein-only model, but a simple per-window ARX fit beats
-  \emph{both} trained transformers by 30--300$\times$ under an identical,
+  \emph{both} trained transformers by 11--342$\times$ under an identical,
   leakage-free evaluation protocol (Section~\ref{sec:baselines}).
   \item The corpus's own identifiability annotations, hypothesized to predict
   in-context prediction difficulty, show a weak, robustly \emph{negative}
@@ -212,9 +214,9 @@ Wiener-Hammerstein white-noise data (the incumbent recipe), and
     held-out axis & wh\_only nMSE & ($\times$ref) & corpus nMSE & ($\times$ref) \\
     \midrule
     reference (train-like) & $0.0040\pm0.0004$ & $1.0\times$ & $0.0215\pm0.0017$ & $1.0\times$ \\
-    family \texttt{backlash}, dt=0.10 & $0.3880\pm0.0322$ & $97.7\times$ & $0.3107\pm0.0080$ & $14.5\times$ \\
+    family \texttt{backlash}, dt=0.10 & $0.3880\pm0.0322$ & $97.7\times$ & $\mathbf{0.3107\pm0.0080}$ & $\mathbf{14.5\times}$ \\
     family \texttt{backlash}, dt=0.05 & $0.3678\pm0.0408$ & $92.6\times$ & $\mathbf{0.2899\pm0.0095}$ & $\mathbf{13.5\times}$ \\
-    family \texttt{backlash}, dt=0.02 & $0.4665\pm0.0195$ & $117.5\times$ & $0.3927\pm0.0102$ & $18.3\times$ \\
+    family \texttt{backlash}, dt=0.02 & $0.4665\pm0.0195$ & $117.5\times$ & $\mathbf{0.3927\pm0.0102}$ & $\mathbf{18.3\times}$ \\
     excitation \texttt{chirp} & $0.1533\pm0.0645$ & $38.6\times$ & $\mathbf{0.0383\pm0.0143}$ & $\mathbf{1.8\times}$ \\
     excitation \texttt{closedloop} & $0.0545\pm0.0056$ & $13.7\times$ & $\mathbf{0.0195\pm0.0031}$ & $\mathbf{0.9\times}$ \\
     rate dt=0.05, \texttt{stribeck} & $0.0341\pm0.0039$ & $8.6\times$ & $\mathbf{0.0215\pm0.0017}$ & $\mathbf{1.0\times}$ \\
@@ -227,15 +229,18 @@ Wiener-Hammerstein white-noise data (the incumbent recipe), and
 
 Table~\ref{tab:headline} and Figure~\ref{fig:transfer} summarize the result.
 Multi-axis training \textbf{solves the rate and excitation axes for most
-families}: the WH-only model's 8--39$\times$ degradation on interpolated rate
-and held-out excitation collapses to $\sim$1--2$\times$ under corpus training.
-It \textbf{halves but does not close the cross-family gap} (93--118$\times \to$
-14--18$\times$, still an order of magnitude off reference) --- we report this
-as PLANTFORGE's open challenge track, not a solved problem. One cell,
-\texttt{saturate} at the held-out rate, is won by \texttt{wh\_only}
-(non-overlapping error bars the other direction): ``corpus training helps'' is
-not a universal law across every cell, and we report the exception rather than
-omit it. Non-overlapping $\pm1$ standard deviation across 11 simultaneous cell
+families}: the WH-only model's 3.5--39$\times$ degradation on interpolated rate
+and held-out excitation collapses to $\sim$1--2$\times$ under corpus training
+for four of the five trained families. The exception is the resonant
+\texttt{drivetrain} family, whose rate cell improves 54.9$\times \to$
+8.0$\times$ but does not close --- a second open finding, invisible to
+single-family generators. Multi-axis training also \textbf{halves but does not
+close the cross-family gap} (93--118$\times \to$ 14--18$\times$, still an order
+of magnitude off reference) --- we report this as PLANTFORGE's open challenge
+track, not a solved problem. One further cell, \texttt{saturate} at the
+held-out rate, is won by \texttt{wh\_only} (non-overlapping error bars the
+other direction): ``corpus training helps'' is not a universal law across every
+cell, and we report the exception rather than omit it. Non-overlapping $\pm1$ standard deviation across 11 simultaneous cell
 comparisons is a descriptive heuristic, not a multiplicity-corrected test; at
 $n=5$ seeds this is a conservative bar relative to the standard error of the
 mean, and the largest-margin cells (below) clear it comfortably.
@@ -302,7 +307,7 @@ context samples, never touching the query.
 
 \paragraph{Result.} Table~\ref{tab:realplant} and Figure~\ref{fig:realplant}
 show ARX beating both trained transformers on both real-plant benchmarks by
-30--300$\times$. This pattern recurs synthetically: ARX also beats both models
+11--342$\times$. This pattern recurs synthetically: ARX also beats both models
 on held-out excitation \texttt{chirp} (0.0039 vs.\ 0.0383/0.1533), held-out
 excitation \texttt{closedloop} (0.0036 vs.\ 0.0195/0.0545), and held-out rate
 \texttt{drivetrain} (0.0253 vs.\ 0.1722/0.2180), and roughly ties \texttt{corpus}
@@ -323,7 +328,7 @@ extrapolation. We view this as a genuine limitation of the frozen in-context
 approach worth further study, not an artifact to explain away.
 
 \paragraph{Degree-2 NARX diverges broadly} in free-run (clipped-but-huge nMSE,
-$10^{10}$--$10^{11}$, on all but the real-plant Silverbox cell) --- a
+$10^{9}$--$10^{12}$, on all but the real-plant Silverbox cell) --- a
 legitimate finding about naive polynomial NARX instability under 32-step free
 simulation, and partly attributable to the $k=8$ order candidate being
 numerically underdetermined at the order-selection stage (153 quadratic
@@ -449,7 +454,7 @@ Bouc-Wen by loader availability, both explained in Section~\ref{sec:realplant}.
 Real-plant nMSE is computed over $\leq$8 non-overlapping windows per dataset; the
 transformer's reported variance is over training seeds on this fixed window
 set, not over window sampling, and the ARX comparison point is a single
-deterministic run --- the 30--300$\times$ margins are far larger than plausible
+deterministic run --- the 11--342$\times$ margins are far larger than plausible
 window-sampling noise, but this should be read as a first zero-shot probe, not
 an exhaustive real-plant evaluation.
 
@@ -536,7 +541,8 @@ identifiability hypothesis, and a single-seed architecture ablation. The
 corpus's central claim --- broader training data narrows distribution-shift
 gaps for in-context SysID transformers --- holds up under these checks, and the
 held-out-family gap specifically holds up as capacity-invariant across a
-15$\times$ parameter range, not an artifact of one model size. Two auxiliary
+15$\times$ parameter range in a single-seed check, not an artifact of one
+model size. Two auxiliary
 claims we expected to hold did not: a classical baseline beats our trained
 transformers on several real and synthetic cells, and the identifiability
 annotations do not positively predict prediction difficulty. We report both,

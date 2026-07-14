@@ -90,8 +90,10 @@ cross-rate comparisons instance-aligned, not resampled).
 
 **Over what timeframe was the data collected?**
 Generated on demand; this repository's reference corpus was generated
-2026-07-14 with `python -m plantforge.corpus --instances 4000` (~20 minutes
-wall-clock on the reference machine, CPU-bound).
+2026-07-13/14 with `python -m plantforge.corpus --instances 4000` (~14 hours
+wall-clock, measured from shard mtimes, on a heavily-shared CPU-contended
+machine; the generator is resumable, so an interrupted run continues where it
+left off).
 
 ## Preprocessing / cleaning / labeling
 
@@ -140,8 +142,9 @@ the corpus supports studying that gap, not concluding it away.
 ## Distribution
 
 **Will the dataset be distributed to third parties?**
-Yes, via a public Hugging Face Datasets repository (see repository README
-for the link once published).
+Yes — published on Hugging Face Datasets:
+https://huggingface.co/datasets/stark4062/plantforge (also linked from the
+repository README).
 
 **How will the dataset be distributed?**
 As the same `.pt` shard files this repository's `corpus.py` generates
@@ -154,8 +157,10 @@ separately licensed under MIT — see `LICENSE`.)
 ## Maintenance
 
 **Who will be supporting/hosting/maintaining the dataset?**
-The maintainers of this repository. Issues/questions: via the repository's
-issue tracker (see repository README for the canonical URL once published).
+The maintainers of this repository. Issues/questions: via the code
+repository's issue tracker once the repository has a public URL (not yet
+published at the time of writing; this line will be updated with the
+canonical URL), or via the Hugging Face dataset's community tab meanwhile.
 
 **Will the dataset be updated?**
 The corpus generator is deterministic given a seed and instance count; the

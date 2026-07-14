@@ -183,7 +183,9 @@ dropped as non-finite).
   **Sample-size note:** real-plant nMSE is computed over ≤8 non-overlapping
   windows (`WINDOW_CAP=8`); ARX/NARX2 there are single deterministic
   evaluations, whereas the transformer ±std reflects 5-seed model variance on
-  the same fixed windows. The 30x–300x ARX margins far exceed this variance,
+  the same fixed windows. The ARX margins (11x–342x — corrected from an
+  earlier "30x–300x" approximation in this note; exact ratios: Silverbox
+  342x/118x, Cascaded_Tanks 52x/11x for wh_only/corpus) far exceed this variance,
   but the real-plant numbers are not seed-averaged and should be reported as
   such.
 - **NARX2 diverges broadly in free-run and should not be treated as a
