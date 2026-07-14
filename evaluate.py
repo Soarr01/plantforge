@@ -27,6 +27,7 @@ DEV = "cuda" if torch.cuda.is_available() else "cpu"
 T_CTX, T_QRY = 192, 32
 D = T_CTX + T_QRY
 CKPT_DIR = pathlib.Path(os.environ.get("PLANTFORGE_DATA", "/home/coder/plantforge_data"))
+SEED = int(os.environ.get("PF_SEED", "0"))   # training seed: init + data pool draws
 HOLD_FAMILY = "backlash"            # held-out family (the hardest per the gate)
 TRAIN_RATES = [0.10, 0.02]          # held-out rate: 0.05
 TRAIN_EXC = ["multisine", "prbs"]   # held-out excitation: chirp, closedloop
@@ -104,8 +105,8 @@ def nmse(model, family, exc, dt, seeds=range(900, 906), B=96):
 
 
 def run(mode: str, total_steps=10000, budget_s=500.0):
-    torch.manual_seed(0)
-    ck_path = CKPT_DIR / f"eval_{mode}.pt"
+    torch.manual_seed(SEED)
+    ck_path = CKPT_DIR / f"eval_{mode}_s{SEED}.pt"
     model = InContextSysID().to(DEV)
     opt = torch.optim.Adam(model.parameters(), lr=5e-4)
     done = 0
@@ -115,7 +116,7 @@ def run(mode: str, total_steps=10000, budget_s=500.0):
         print(f"[{mode}] resumed at step {done}")
     t0 = time.time()
     print(f"[{mode}] building fresh data pool ({POOL_N} batches) ...")
-    pool = build_pool(mode, run_salt=done * 13)
+    pool = build_pool(mode, run_salt=done * 13 + SEED * 1_000_000)
     print(f"[{mode}] pool ready ({time.time()-t0:.0f}s); training ...")
     train_t0 = time.time()
     i = done

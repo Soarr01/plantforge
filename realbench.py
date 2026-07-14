@@ -190,7 +190,7 @@ def _report_dataset(header: str, windows, skip_reason: str, models):
 
 def main():
     print("=== real-plant zero-shot transfer (in-context nMSE) ===")
-    models = {name: load_model(f"eval_{name}.pt") for name in ("wh_only", "corpus")}
+    models = {name: load_model(f"eval_{name}_s0.pt") for name in ("wh_only", "corpus")}
     missing = [name for name, m in models.items() if m is None]
     if missing:
         print(f"  (checkpoint(s) missing, skipped: {', '.join(missing)} -- "
