@@ -109,15 +109,67 @@ show it transfers to real hardware after fine-tuning. This is generically
 capable but does not vary family/excitation/rate/identifiability jointly, and
 does not target control-plant nonlinearities specifically; we view it as the
 closest and most relevant prior synthetic-data approach, and the one whose
-scope PLANTFORGE is most easily confused with.
+scope PLANTFORGE is most easily confused with. A separate, theoretical line of
+work \citep{cole2025incontext} derives approximation and depth-separation
+bounds for transformers doing in-context learning of \emph{linear} dynamical
+systems; PLANTFORGE addresses the empirical/benchmark side this theory does not
+cover (nonlinear families, real-plant transfer, identifiability).
 
-\paragraph{Scaling benchmarks for dynamical-system identification.}
+\paragraph{In-context system identification.}
+The training recipe we stress-test throughout this paper --- Wiener-Hammerstein-only
+white-noise pretraining for an in-context SysID transformer --- is the one used
+across the \citet{forgione2023system, piga2024adaptation} line of work
+(the ``forgi86 lineage''), each of which regenerates its own private WH-only
+data. This lineage has continued to grow: \citet{rufolo2025enhanced} propose an
+enhanced architecture (probabilistic framing, non-contiguous context/query
+windows, recurrent patching) for the same in-context SysID task --- PLANTFORGE
+deliberately evaluates a plain encoder-only baseline instead, so our
+distribution-shift findings are not confounded by architecture novelty;
+\citet{busetto2024incontext} extend the same meta-model paradigm to state
+estimation, showing the narrow-recipe pattern recurs across adjacent tasks, not
+just the one paper we benchmark against directly; \citet{rufolo2025distributionally}
+attack the identical cross-family/rate/excitation generalization gap PLANTFORGE
+measures, but via a distributionally-robust training \emph{objective} on a
+fixed data distribution, a complementary approach to PLANTFORGE's strategy of
+broadening the training \emph{corpus} itself. Outside this lineage,
+\citet{akram2024transformers} give an independent theoretical account of what
+in-context transformers implicitly compute for dynamical systems, evidence the
+paradigm has uptake beyond the one research group PLANTFORGE otherwise
+stress-tests exclusively. PLANTFORGE's own \texttt{InContextSysID} model is a
+standard encoder-only transformer over $(u, y)$ pairs --- our contribution is
+the training corpus and the scrutiny applied to it, not architectural novelty.
+
+\paragraph{Domain randomization and procedural benchmark generation.}
+PLANTFORGE's design --- generate broadly across a parametrized axis so a
+held-out real system looks like ``just another variation'' rather than a
+foreign distribution --- is the system-identification instance of domain
+randomization, established in robotics by \citet{tobin2017domain} and surveyed
+for robot learning by \citet{muratore2022robot}; unlike most of that
+literature, PLANTFORGE directly measures the residual zero-shot gap on real
+plants (Section~\ref{sec:realplant}) rather than assuming randomization closes
+it, and finds it does not fully close for the hardest axis (cross-family
+transfer). Procedural generation as a benchmark-design tool in its own right
+--- generating a broad, structured space of environments to measure
+generalization, independent of any one target domain --- is established by
+\citet{cobbe2020leveraging} for reinforcement learning and by
+\citet{takamoto2022pdebench, gupta2022towards} for PDE surrogate modeling
+(Section~\ref{sec:corpus}'s three jointly-varied axes are PLANTFORGE's analog
+of these platforms' varied PDE type/parameters/boundary conditions, adapted to
+a domain --- control/mechatronics --- with an excitation-design axis these
+PDE benchmarks have no equivalent of). The general phenomenon PLANTFORGE's
+headline transfer-gap measurement instantiates is studied at ML-wide scale by
+\citet{koh2021wilds}.
+
+\paragraph{Scaling benchmarks and other released dynamics corpora.}
 DynaDojo \citep{bhamidipaty2023dynadojo} is an extensible platform for
 benchmarking how SysID algorithms scale with training samples, system
 complexity, and target error, over a library of $\sim$20 generic ODE/chaotic
 systems. It does not include control-specific nonlinearities (deadzone,
 saturation, hysteresis, drivetrain compliance) or an excitation/rate axis, and
-carries no identifiability annotations.
+carries no identifiability annotations. \citet{ullah2026nanobench} release a
+real-hardware (Crazyflie 2.1) multi-task SysID/control/state-estimation
+benchmark, evidence the community values multi-axis benchmark design even
+outside the synthetic setting PLANTFORGE occupies.
 
 \paragraph{Real-measured benchmarks.}
 The community's default real-data benchmarks --- Silverbox, Wiener-Hammerstein,
@@ -129,15 +181,25 @@ classical baseline outperforming our trained transformers on those benchmarks
 known parameters and controllable axes is a useful complement, not a
 replacement, for this real-measured suite.
 
-\paragraph{In-context system identification.}
-The training recipe we stress-test throughout this paper --- Wiener-Hammerstein-only
-white-noise pretraining for an in-context SysID transformer --- is the one used
-across the \citet{forgione2023system, piga2024adaptation} line of work, each of
-which regenerates its own private WH-only data. PLANTFORGE's motivation is to
-make this recipe's narrowness measurable and to release a broader alternative,
-not to claim architectural novelty in the transformer itself: our
-\texttt{InContextSysID} model is a standard encoder-only transformer over
-$(u, y)$ pairs.
+\paragraph{Classical nonlinear system identification and identifiability.}
+PLANTFORGE's ARX/NARX baseline (Section~\ref{sec:baselines}) and per-instance
+Fisher-information identifiability annotations (Section~\ref{sec:corpus},
+tested in Section~\ref{sec:identifiability}) sit within a mature classical
+literature: black-box nonlinear model structures are surveyed by
+\citet{sjoberg1995nonlinear}, and NARMAX methods specifically --- including the
+free-run simulation instability our degree-2 NARX baseline reproduces
+empirically --- by \citet{billings2013nonlinear}. The Fisher-information/
+Cram\'er-Rao formalism our \texttt{identifiability.py} implements is standard
+system-identification theory \citep{ljung1999system}; \citet{hjalmarsson2005experiment}
+surveys the connection from experiment/excitation design to identification
+accuracy that motivates our excitation axis, against whose usual assumption
+(better-designed excitations $\to$ better identifiability $\to$ presumed more
+useful data) our null result in Section~\ref{sec:identifiability} is a direct,
+non-obvious counterpoint. \citet{aguirre2010prediction} study the same
+prediction-error-vs.-simulation-error distinction our ARX free-run protocol
+turns on. Excitation design specifically --- multisine and PRBS signals, both
+implemented in our \texttt{excitation.py} --- is treated at length by
+\citet{pintelon2012system}.
 
 \section{The PLANTFORGE Corpus}
 \label{sec:corpus}
@@ -179,8 +241,9 @@ excitation that does.
 \paragraph{Release.} 240{,}000 instances (5 families $\times$ 4 excitations
 $\times$ 3 rates $\times$ 4{,}000 instances/cell), 583\,MB, released under
 CC~BY~4.0 \citep{plantforgedataset}. All generation, training, and evaluation
-code is released under MIT. Full datasheet (motivation, composition,
-collection process, uses, distribution, maintenance) accompanies the release.
+code is released under MIT. Full datasheet, following the
+\citet{gebru2021datasheets} template (motivation, composition,
+collection process, uses, distribution, maintenance), accompanies the release.
 
 \section{Experiments}
 \label{sec:experiments}
