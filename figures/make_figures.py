@@ -116,18 +116,19 @@ def fig1_transfer_matrix():
 # Figure 2: real-plant zero-shot, wh_only vs corpus vs ARX, log-y
 # ---------------------------------------------------------------------------
 def fig2_real_plant():
-    datasets = ["Silverbox\n(decimated ≈50Hz)", "Cascaded_Tanks\n(native dt=4s, extrapolation)"]
-    wh_mean = [0.9583, 0.3937]
-    wh_std = [0.2170, 0.0814]
-    co_mean = [0.3306, 0.0843]
-    co_std = [0.0397, 0.0430]
-    arx = [0.0028, 0.0075]   # single deterministic run, no std -- noted below
+    datasets = ["Silverbox\n(decimated ≈50Hz)", "Cascaded_Tanks\n(native dt=4s, extrapolation)",
+                "Bouc-Wen\n(decimated 15x, exact 50Hz)"]
+    wh_mean = [0.9583, 0.3937, 2.5373]
+    wh_std = [0.2170, 0.0814, 0.8476]
+    co_mean = [0.3306, 0.0843, 1.5894]
+    co_std = [0.0397, 0.0430, 0.3607]
+    arx = [0.0028, 0.0075, 0.0603]   # single deterministic run, no std -- noted below
 
     x = np.arange(len(datasets))
-    w = 0.26
-    fig, ax = plt.subplots(figsize=(6.6, 3.6))
+    w = 0.22
+    fig, ax = plt.subplots(figsize=(7.6, 3.8))
     ax.set_yscale("log")
-    ax.set_ylim(1.5e-3, 3.5)
+    ax.set_ylim(1.5e-3, 5.0)
     ax.bar(x - w, wh_mean, w, yerr=wh_std, capsize=3, color=C_WH, hatch="//",
            edgecolor="white", linewidth=0.5, label="wh–only")
     ax.bar(x, co_mean, w, yerr=co_std, capsize=3, color=C_CORPUS,
@@ -152,7 +153,8 @@ def fig2_real_plant():
     ax.set_axisbelow(True)
     ax.set_title("Zero-shot on real plants — a classical baseline\nbeats both trained transformers",
                  loc="left", fontsize=9)
-    ax.text(0.0, -0.30, "ARX: single deterministic run, ≤8 windows (no std shown).\n"
+    ax.text(0.0, -0.30, "ARX: single deterministic run, ≤8 windows (no std shown; NARX2 omitted --\n"
+            "diverges except on Silverbox/Bouc-Wen, see paper Section 4.3).\n"
             "wh_only/corpus: mean±std, 5 training seeds, same fixed windows.",
             transform=ax.transAxes, fontsize=6, color=MUTED, va="top")
 
