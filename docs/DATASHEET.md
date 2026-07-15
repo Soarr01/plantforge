@@ -158,9 +158,8 @@ separately licensed under MIT — see `LICENSE`.)
 
 **Who will be supporting/hosting/maintaining the dataset?**
 The maintainers of this repository. Issues/questions: via the code
-repository's issue tracker once the repository has a public URL (not yet
-published at the time of writing; this line will be updated with the
-canonical URL), or via the Hugging Face dataset's community tab meanwhile.
+repository's issue tracker (https://github.com/Soarr01/plantforge/issues) or
+the Hugging Face dataset's community tab.
 
 **Will the dataset be updated?**
 The corpus generator is deterministic given a seed and instance count; the
