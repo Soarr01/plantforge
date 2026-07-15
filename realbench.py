@@ -7,6 +7,8 @@ only requires it when actually run, not merely imported.
 """
 from __future__ import annotations
 
+import pathlib
+
 import numpy as np
 import scipy.signal
 import torch
@@ -15,6 +17,10 @@ from .corpus import RATES
 from .evaluate import InContextSysID, _norm, T_CTX, D, DEV, CKPT_DIR
 
 WINDOW_CAP = 8
+
+BOUCWEN_URL = "https://data.4tu.nl/ndownloader/items/7060f9bc-8289-411e-8d32-57bef2740d32/versions/1"
+BOUCWEN_CACHE = pathlib.Path.home() / ".nonlinear_benchmarks" / "BoucWen"
+BOUCWEN_DT = 1.0 / 750.0   # native sampling rate, 750 Hz exactly (benchmark spec PDF)
 
 
 def decimate_to_factor(x: np.ndarray, q: int) -> np.ndarray:
@@ -170,6 +176,51 @@ def wienerhammer_status():
     duration = len(test.u) * native_dt
     min_needed = D * min(RATES)
     return duration, min_needed
+
+
+def _boucwen_fetch() -> pathlib.Path:
+    """Download+cache the official Bouc-Wen test signals (CC BY-SA 4.0,
+    Noel & Schoukens 2020, data.4tu.nl DOI 10.4121/12967592) if not already
+    cached. Returns the directory containing the four .mat test-signal
+    files. Uses only the standard library (urllib, zipfile) -- no new
+    dependency for a one-off fetch of a single small dataset."""
+    inner = BOUCWEN_CACHE / "BoucWenFiles" / "Test signals" / "Validation signals"
+    if (inner / "uval_multisine.mat").exists():
+        return inner
+    import io
+    import urllib.request
+    import zipfile
+    print("dataset not found, downloading Bouc-Wen from data.4tu.nl ...")
+    BOUCWEN_CACHE.mkdir(parents=True, exist_ok=True)
+    with urllib.request.urlopen(BOUCWEN_URL) as resp:
+        outer_bytes = resp.read()
+    with zipfile.ZipFile(io.BytesIO(outer_bytes)) as outer_zip:
+        outer_zip.extract("BoucWenFiles.zip", BOUCWEN_CACHE)
+    inner_zip_path = BOUCWEN_CACHE / "BoucWenFiles.zip"
+    with zipfile.ZipFile(inner_zip_path) as inner_zip:
+        # inner_zip's own members are already prefixed with "BoucWenFiles/",
+        # so extract into BOUCWEN_CACHE directly -- extracting into
+        # BOUCWEN_CACHE / "BoucWenFiles" would double that prefix and produce
+        # .../BoucWenFiles/BoucWenFiles/Test signals/... instead of `inner`.
+        inner_zip.extractall(BOUCWEN_CACHE)
+    return inner
+
+
+def boucwen_windows():
+    """Load Bouc-Wen's multisine + sinesweep test records (noiseless,
+    750 Hz native), decimate to the nearest trained rate, and pool windows
+    across both. Returns (windows_or_None, achieved_dt, decimation_factor)."""
+    import scipy.io as sio
+    d = _boucwen_fetch()
+    q, achieved_dt = best_decimation_factor(BOUCWEN_DT, RATES)
+    records = []
+    for name in ("multisine", "sinesweep"):
+        u = sio.loadmat(d / f"uval_{name}.mat")[f"uval_{name}"].ravel().astype(np.float64)
+        y = sio.loadmat(d / f"yval_{name}.mat")[f"yval_{name}"].ravel().astype(np.float64)
+        u = decimate_to_factor(u, q)
+        y = decimate_to_factor(y, q)
+        records.append((u, y))
+    return pooled_windows(records), achieved_dt, q
 
 
 def _report_dataset(header: str, windows, skip_reason: str, models):
