@@ -89,6 +89,16 @@ def test_best_decimation_factor_no_crash_when_native_much_finer():
     print("  PASS  test_best_decimation_factor_no_crash_when_native_much_finer")
 
 
+def test_best_decimation_factor_matches_boucwen():
+    native_dt = 1.0 / 750.0
+    result = best_decimation_factor(native_dt, RATES)
+    assert result is not None
+    q, achieved_dt = result
+    assert q == 15, q
+    assert abs(achieved_dt - 0.02) < 1e-9, achieved_dt   # exact match, no rounding error
+    print("  PASS  test_best_decimation_factor_matches_boucwen")
+
+
 def test_pooled_windows_caps_across_records():
     rec1 = (np.zeros(D * 2, dtype=np.float64), np.zeros(D * 2, dtype=np.float64))
     rec2 = (np.ones(D * 5, dtype=np.float64), np.ones(D * 5, dtype=np.float64))
@@ -132,6 +142,7 @@ def _run_all():
     test_best_decimation_factor_none_when_native_already_coarser()
     test_decimate_to_factor_prime_terminates()
     test_best_decimation_factor_no_crash_when_native_much_finer()
+    test_best_decimation_factor_matches_boucwen()
     test_pooled_windows_caps_across_records()
     test_pooled_windows_none_when_all_records_too_short()
     test_nmse_on_windows_finite_untrained_model()

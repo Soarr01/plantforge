@@ -258,6 +258,11 @@ def main():
         f"{ct_dt / max(RATES):.0f}x coarser than trained range, EXTRAPOLATION):",
         ct_windows, "record too short for one context window", models)
 
+    bw_windows, bw_dt, bw_q = boucwen_windows()
+    _report_dataset(
+        f"  Bouc-Wen (decimated {bw_q}x -> dt={bw_dt:.4f}s, exact 50Hz match):",
+        bw_windows, "no full window available after decimation", models)
+
     wh_duration, wh_min_needed = wienerhammer_status()
     print(f"  WienerHammerBenchMark: SKIPPED -- record duration "
           f"({wh_duration:.2f}s) shorter than one context window at any "
