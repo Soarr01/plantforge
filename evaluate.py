@@ -30,7 +30,7 @@ CKPT_DIR = pathlib.Path(os.environ.get("PLANTFORGE_DATA", "/home/coder/plantforg
 SEED = int(os.environ.get("PF_SEED", "0"))   # training seed: init + data pool draws
 WIDTH = int(os.environ.get("PF_WIDTH", "160"))    # InContextSysID d
 LAYERS = int(os.environ.get("PF_LAYERS", "5"))    # InContextSysID layers
-HOLD_FAMILY = "backlash"            # held-out family (the hardest per the gate)
+HOLD_FAMILY = os.environ.get("PF_HOLD_FAMILY", "backlash")   # held-out family
 TRAIN_RATES = [0.10, 0.02]          # held-out rate: 0.05
 TRAIN_EXC = ["multisine", "prbs"]   # held-out excitation: chirp, closedloop
 
@@ -72,12 +72,17 @@ POOL_N = 240                        # fresh batches per run; iterated (data gen 
 
 
 def _ckpt_name(mode: str) -> str:
-    """eval_{mode}_s{SEED}.pt for the default architecture (160/5) --
-    unchanged from before this plan, so the already-trained default
-    checkpoints stay loadable with zero retraining. Non-default
-    width/layers get an explicit suffix so they never collide with the
-    default-architecture name."""
-    suffix = "" if (WIDTH, LAYERS) == (160, 5) else f"_d{WIDTH}L{LAYERS}"
+    """eval_{mode}_s{SEED}.pt for the default architecture (160/5) and
+    default held-out family (backlash) -- unchanged from before this plan,
+    so the already-trained default checkpoints stay loadable with zero
+    retraining. Non-default width/layers and/or non-default held family
+    each add an explicit suffix component so they never collide with the
+    default name or each other."""
+    suffix = ""
+    if (WIDTH, LAYERS) != (160, 5):
+        suffix += f"_d{WIDTH}L{LAYERS}"
+    if HOLD_FAMILY != "backlash":
+        suffix += f"_ho{HOLD_FAMILY.upper()}"
     return f"eval_{mode}_s{SEED}{suffix}.pt"
 
 
