@@ -1,7 +1,8 @@
 """Leave-one-family-out sweep: is the paper's held-out family choice
 (backlash) representative of the corpus's hardest case, or an outlier?
-Trains one model per alternative held-out family (single seed 0, corpus
-recipe) and compares each to the already-trained 5-seed backlash baseline.
+Trains one model per alternative held-out family (corpus recipe) and
+compares each to the already-trained 5-seed backlash baseline, aggregating
+mean+-std over however many finished seeds exist per family.
 
 Deliberately does NOT use evaluate.report() (which hardcodes "stribeck" as
 the reference family -- invalid when stribeck itself is held out). Instead
@@ -15,9 +16,10 @@ from __future__ import annotations
 import torch
 
 from .evaluate import InContextSysID, nmse, FAMILIES, CKPT_DIR, DEV
+from .aggregate import mean_std_str
 
 HOLD_CHOICES = [f for f in FAMILIES if f != "backlash"]
-BACKLASH_SEEDS = range(5)   # the already-trained 5-seed baseline
+ALL_SEEDS = range(5)
 TOTAL_STEPS = 10000
 
 
@@ -51,36 +53,49 @@ def reference_and_heldout(model, held_family: str):
     return reference, held_out
 
 
+def _finished_models_for(held_family: str, seeds):
+    """Load every finished (step >= TOTAL_STEPS) checkpoint for this
+    held-out family across the given seeds; print a skip note for
+    missing/unfinished ones."""
+    models = []
+    for seed in seeds:
+        ckpt_name = _ckpt_name_for(held_family, seed)
+        ck_path = CKPT_DIR / ckpt_name
+        if not ck_path.exists():
+            print(f"    (seed {seed}: {ckpt_name} missing -- skipped)")
+            continue
+        step = torch.load(ck_path, map_location="cpu")["step"]
+        if step < TOTAL_STEPS:
+            print(f"    (seed {seed}: {ckpt_name} unfinished at step {step} -- skipped)")
+            continue
+        models.append(load_variant(ckpt_name))
+    return models
+
+
+def _report_family(held_family: str, seeds, label: str):
+    print(f"  {label}:")
+    models = _finished_models_for(held_family, seeds)
+    if not models:
+        print("    MISSING -- run scripts/train_leave_one_out.sh "
+              "and scripts/train_leave_one_out_seeds.sh")
+        return
+    refs, outs = [], []
+    for m in models:
+        r, o = reference_and_heldout(m, held_family)
+        refs.append(r)
+        outs.append(o)
+    ref_mean = sum(refs) / len(refs)
+    out_mean = sum(outs) / len(outs)
+    print(f"    reference: {mean_std_str(refs)}")
+    print(f"    held_out:  {mean_std_str(outs)}  ({out_mean / ref_mean:.1f}x ref)")
+
+
 def main():
     print("=== leave-one-family-out sweep: corpus recipe, "
           "reference = mean nMSE over 4 trained families ===")
-
-    print("  backlash (existing 5-seed baseline):")
-    refs, outs = [], []
-    for seed in BACKLASH_SEEDS:
-        model = load_variant(_ckpt_name_for("backlash", seed))
-        if model is None:
-            print(f"    (seed {seed}: missing or unfinished -- skipped)")
-            continue
-        r, o = reference_and_heldout(model, "backlash")
-        refs.append(r); outs.append(o)
-    if refs:
-        ref_mean = sum(refs) / len(refs)
-        out_mean = sum(outs) / len(outs)
-        print(f"    reference={ref_mean:.4f}  held_out={out_mean:.4f}  "
-              f"({out_mean/ref_mean:.1f}x ref)  n={len(refs)}")
-    else:
-        print("    MISSING -- no finished backlash checkpoints found")
-
+    _report_family("backlash", ALL_SEEDS, "backlash (existing baseline)")
     for held_family in HOLD_CHOICES:
-        ckpt_name = _ckpt_name_for(held_family, seed=0)
-        model = load_variant(ckpt_name)
-        print(f"  {held_family} (seed 0):")
-        if model is None:
-            print(f"    MISSING -- run scripts/train_leave_one_out.sh")
-            continue
-        r, o = reference_and_heldout(model, held_family)
-        print(f"    reference={r:.4f}  held_out={o:.4f}  ({o/r:.1f}x ref)  n=1")
+        _report_family(held_family, ALL_SEEDS, held_family)
 
 
 if __name__ == "__main__":
