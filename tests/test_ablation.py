@@ -6,7 +6,7 @@ no GPU, no network.
 import sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 
-from plantforge.ablation import VARIANTS, param_count, load_variant
+from plantforge.ablation import VARIANTS, param_count, load_variant, _ckpt_name_for
 
 
 def test_variants_include_default_and_four_others():
@@ -29,10 +29,18 @@ def test_load_variant_missing_checkpoint_returns_none():
     print("  PASS  test_load_variant_missing_checkpoint_returns_none")
 
 
+def test_ckpt_name_for_seed_parameter():
+    assert _ckpt_name_for(160, 5, seed=0) == "eval_corpus_s0.pt"
+    assert _ckpt_name_for(160, 5, seed=3) == "eval_corpus_s3.pt"
+    assert _ckpt_name_for(80, 5, seed=2) == "eval_corpus_s2_d80L5.pt"
+    print("  PASS  test_ckpt_name_for_seed_parameter")
+
+
 def _run_all():
     test_variants_include_default_and_four_others()
     test_param_count_monotone_in_width_and_layers()
     test_load_variant_missing_checkpoint_returns_none()
+    test_ckpt_name_for_seed_parameter()
 
 
 if __name__ == "__main__":
