@@ -120,11 +120,12 @@ def synthetic_report():
 
 
 def real_report():
-    from .realbench import silverbox_windows, cascaded_tanks_windows
+    from .realbench import silverbox_windows, cascaded_tanks_windows, boucwen_windows
     print("=== classical baselines on real-plant windows (nMSE) ===")
     sb, sb_dt, sb_q = silverbox_windows()
     ct, ct_dt = cascaded_tanks_windows()
-    for name, windows in (("Silverbox", sb), ("Cascaded_Tanks", ct)):
+    bw, bw_dt, bw_q = boucwen_windows()
+    for name, windows in (("Silverbox", sb), ("Cascaded_Tanks", ct), ("Bouc-Wen", bw)):
         if windows is None:
             print(f"  {name}: SKIPPED (no windows)")
             continue

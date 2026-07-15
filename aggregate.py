@@ -76,11 +76,13 @@ def main():
     seeds = [int(s) for s in os.environ.get("PF_SEEDS", "0,1,2,3,4").split(",")]
     realplant = {}
     try:
-        from .realbench import silverbox_windows, cascaded_tanks_windows
+        from .realbench import silverbox_windows, cascaded_tanks_windows, boucwen_windows
         sb, sb_dt, sb_q = silverbox_windows()
         ct, ct_dt = cascaded_tanks_windows()
+        bw, bw_dt, bw_q = boucwen_windows()
         realplant = {f"Silverbox (decimated {sb_q}x -> dt={sb_dt:.4f}s)": sb,
-                     f"Cascaded_Tanks (native dt={ct_dt:.2f}s, extrapolation)": ct}
+                     f"Cascaded_Tanks (native dt={ct_dt:.2f}s, extrapolation)": ct,
+                     f"Bouc-Wen (decimated {bw_q}x -> dt={bw_dt:.4f}s)": bw}
     except Exception as e:
         print(f"(real-plant section skipped: {type(e).__name__}: {e})")
 
