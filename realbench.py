@@ -1,7 +1,10 @@
 """Zero-shot evaluation of trained in-context SysID models on real measured
-plants from nonlinearbenchmark.org, via the `nonlinear_benchmarks` package.
-`nonlinear_benchmarks` is imported lazily (inside functions) so this module
-only requires it when actually run, not merely imported.
+plants from nonlinearbenchmark.org: Silverbox, Cascaded_Tanks, and
+WienerHammerBenchMark via the `nonlinear_benchmarks` package (imported
+lazily, inside functions, so this module only requires it when actually
+run); Bouc-Wen via a direct fetch from its official source (4TU.ResearchData,
+Noel & Schoukens 2020, CC BY-SA 4.0 -- see _boucwen_fetch), since it is not
+exposed by `nonlinear_benchmarks`'s public API.
 
     python -m plantforge.realbench
 """
@@ -226,7 +229,7 @@ def boucwen_windows():
 def _report_dataset(header: str, windows, skip_reason: str, models):
     """Print `header`, then either a SKIPPED line (if windows is None) or,
     for each non-None model, its nMSE on the given windows. Shared by the
-    Silverbox and Cascaded_Tanks blocks in main()."""
+    Silverbox, Cascaded_Tanks, and Bouc-Wen blocks in main()."""
     print(header)
     if windows is None:
         print(f"    SKIPPED -- {skip_reason}")
