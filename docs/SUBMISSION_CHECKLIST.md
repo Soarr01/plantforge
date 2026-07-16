@@ -147,28 +147,31 @@ Suggest adding a short paragraph (Section 3 "The PLANTFORGE Corpus" or a
 new subsection under Section 4/Experiments preamble) with the above,
 trimmed to what fits the page budget (see §4).
 
-## 4. Page limit — likely a real, currently-unresolved risk
+## 4. Page limit — DONE (2026-07-16)
 
-Historical NeurIPS main/D&B-track convention: **9-page limit on main text**
-(Abstract through Conclusion), excluding references and the mandatory
-checklist. Measured from the compiled PDF (`paper/main.pdf`, 12 pages
-total, 2026-07-16 build): the Conclusion (end of Section 7) and the start
-of References both fall on **page 10**, meaning main content currently
-spans essentially all of pages 1-10 — approximately **9.7 pages**, over the
-classic 9-page convention if it still applies to whatever cycle you target.
-Action: confirm the exact page limit for your actual target venue/year (it
-can differ from the historical 9-page number — verify, don't assume), and
-if over, either trim main-text content or move something to Broader
-Impact/Discussion into an appendix (references + appendix + checklist are
-typically NOT counted against the limit, only sections 1 through the
-Conclusion are).
+Confirmed from the primary source (NeurIPS 2026 Main Track Handbook,
+fetched live): "The main text of a submitted paper is limited to nine
+content pages, including all figures and tables." References, appendix,
+and the mandatory checklist do not count.
 
-Note this is now a live tension with §3 above: adding a compute-resources
-paragraph makes an already-tight page budget worse. If both are needed,
-plan to trim ~1 page of existing main-text content first (candidates: the
-architecture-ablation paragraph's methodological-trap discussion is fairly
-long and partially redundant with the identical framing already used for
-the leave-one-out ratio trap; could be tightened).
+Measured before trimming: main content (Abstract through Conclusion)
+spilled ~0.6-0.7 pages onto page 10, with References starting partway down
+that page. Trimmed prose across ~12 paragraphs (Related Work's 6
+subsections, all 5 Discussion/Limitations paragraphs, Broader Impact, and
+the Conclusion) — tightening connective language and removing one genuinely
+redundant explanation (the $\times$ref-ratio-is-misleading argument was
+fully spelled out twice; the second occurrence, in the architecture-ablation
+paragraph, now cross-references the first instead of re-deriving it).
+
+**No numbers, citations, or claims were removed or altered** — verified by
+grepping every key figure that appears in the trimmed passages (93--118x,
+14--18x, 11--342x, 26--42x, 19.1x/7.4x, 0.29--0.30, 0.035--0.047, 6--8x)
+against the post-trim source, all present and unchanged. Recompiled clean
+(pdflatex x2, no undefined references), and verified visually: page 9 now
+ends exactly at the end of the Conclusion, page 10 starts directly with
+References, no main-text spillover. Total PDF is 16 pages (9 main + ~2
+references + the new NeurIPS checklist section, which is correctly excluded
+from the content-page count).
 
 ## 5. Croissant metadata — DONE (2026-07-16)
 

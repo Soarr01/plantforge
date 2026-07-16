@@ -104,104 +104,90 @@ it, and we report them in full rather than adjusting the narrative around them
 \label{sec:related}
 
 \paragraph{Synthetic foundation models for dynamics.}
-\citet{ziegler2024foundation} pretrain a transformer-based foundation model
-purely on synthetic dynamics sampled from a reproducing kernel Hilbert space, and
-show it transfers to real hardware after fine-tuning. This is generically
-capable but does not vary family/excitation/rate/identifiability jointly, and
-does not target control-plant nonlinearities specifically; we view it as the
-closest and most relevant prior synthetic-data approach, and the one whose
-scope PLANTFORGE is most easily confused with. A separate, theoretical line of
-work \citep{cole2025incontext} derives approximation and depth-separation
-bounds for transformers doing in-context learning of \emph{linear} dynamical
-systems; PLANTFORGE addresses the empirical/benchmark side this theory does not
-cover (nonlinear families, real-plant transfer, identifiability).
+\citet{ziegler2024foundation} pretrain a transformer on synthetic dynamics
+sampled from a reproducing kernel Hilbert space and show it transfers to
+real hardware after fine-tuning. This is generically capable but does not
+vary family/excitation/rate/identifiability jointly, nor target
+control-plant nonlinearities specifically; we view it as the closest prior
+synthetic-data approach, and the one whose scope PLANTFORGE is most easily
+confused with. A separate, theoretical line of work \citep{cole2025incontext}
+derives approximation/depth-separation bounds for in-context learning of
+\emph{linear} dynamical systems; PLANTFORGE addresses the
+empirical/benchmark side this theory does not cover.
 
 \paragraph{In-context system identification.}
-The training recipe we stress-test throughout this paper --- Wiener-Hammerstein-only
-white-noise pretraining for an in-context SysID transformer --- is the one used
-across the \citet{forgione2023system, piga2024adaptation} line of work
-(the ``forgi86 lineage''), each of which regenerates its own private WH-only
-data. This lineage has continued to grow: \citet{rufolo2025enhanced} propose an
-enhanced architecture (probabilistic framing, non-contiguous context/query
-windows, recurrent patching) for the same in-context SysID task --- PLANTFORGE
-deliberately evaluates a plain encoder-only baseline instead, so our
-distribution-shift findings are not confounded by architecture novelty;
-\citet{busetto2024incontext} extend the same meta-model paradigm to state
-estimation, showing the narrow-recipe pattern recurs across adjacent tasks, not
-just the one paper we benchmark against directly; \citet{rufolo2025distributionally}
-attack the identical cross-family/rate/excitation generalization gap PLANTFORGE
-measures, but via a distributionally-robust training \emph{objective} on a
-fixed data distribution, a complementary approach to PLANTFORGE's strategy of
-broadening the training \emph{corpus} itself. Outside this lineage,
-\citet{akram2024transformers} give an independent theoretical account of what
-in-context transformers implicitly compute for dynamical systems, evidence the
-paradigm has uptake beyond the one research group PLANTFORGE otherwise
-stress-tests exclusively. PLANTFORGE's own \texttt{InContextSysID} model is a
-standard encoder-only transformer over $(u, y)$ pairs --- our contribution is
-the training corpus and the scrutiny applied to it, not architectural novelty.
+The training recipe we stress-test --- Wiener-Hammerstein-only white-noise
+pretraining --- is used across the \citet{forgione2023system,
+piga2024adaptation} line of work (the ``forgi86 lineage''), each regenerating
+its own private WH-only data. \citet{rufolo2025enhanced} propose an enhanced
+architecture (probabilistic framing, non-contiguous windows, recurrent
+patching) for the same task --- PLANTFORGE evaluates a plain encoder-only
+baseline instead, so our findings are not confounded by architecture
+novelty; \citet{busetto2024incontext} extend the same paradigm to state
+estimation, showing the narrow-recipe pattern recurs beyond the one paper we
+benchmark against; \citet{rufolo2025distributionally} attack the same
+generalization gap via a distributionally-robust training \emph{objective},
+complementary to our strategy of broadening the training \emph{corpus}.
+\citet{akram2024transformers} give an independent theoretical account of
+what in-context transformers compute for dynamical systems, evidence the
+paradigm has uptake beyond this one lineage. Our own \texttt{InContextSysID}
+is a standard encoder-only transformer over $(u,y)$ pairs --- our
+contribution is the corpus and its scrutiny, not architectural novelty.
 
 \paragraph{Domain randomization and procedural benchmark generation.}
 PLANTFORGE's design --- generate broadly across a parametrized axis so a
-held-out real system looks like ``just another variation'' rather than a
-foreign distribution --- is the system-identification instance of domain
-randomization, established in robotics by \citet{tobin2017domain} and surveyed
-for robot learning by \citet{muratore2022robot}; unlike most of that
-literature, PLANTFORGE directly measures the residual zero-shot gap on real
-plants (Section~\ref{sec:realplant}) rather than assuming randomization closes
-it, and finds it does not fully close for the hardest axis (cross-family
-transfer). Procedural generation as a benchmark-design tool in its own right
---- generating a broad, structured space of environments to measure
-generalization, independent of any one target domain --- is established by
-\citet{cobbe2020leveraging} for reinforcement learning and by
-\citet{takamoto2022pdebench, gupta2022towards} for PDE surrogate modeling
-(Section~\ref{sec:corpus}'s three jointly-varied axes are PLANTFORGE's analog
-of these platforms' varied PDE type/parameters/boundary conditions, adapted to
-a domain --- control/mechatronics --- with an excitation-design axis these
-PDE benchmarks have no equivalent of). The general phenomenon PLANTFORGE's
-headline transfer-gap measurement instantiates is studied at ML-wide scale by
-\citet{koh2021wilds}.
+held-out real system looks like ``just another variation'' --- is the
+system-identification instance of domain randomization, established in
+robotics by \citet{tobin2017domain} and surveyed by \citet{muratore2022robot};
+unlike most of that literature, PLANTFORGE directly measures the residual
+zero-shot gap on real plants (Section~\ref{sec:realplant}) rather than
+assuming randomization closes it, and finds it does not fully close for the
+hardest axis. Procedural generation as a benchmark-design tool in its own
+right is established by \citet{cobbe2020leveraging} for reinforcement
+learning and by \citet{takamoto2022pdebench, gupta2022towards} for PDE
+surrogate modeling (Section~\ref{sec:corpus}'s three jointly-varied axes are
+PLANTFORGE's analog of these platforms' varied PDE type/parameters/boundary
+conditions, plus an excitation-design axis these PDE benchmarks have no
+equivalent of). The general phenomenon PLANTFORGE's transfer-gap measurement
+instantiates is studied at ML-wide scale by \citet{koh2021wilds}.
 
 \paragraph{Scaling benchmarks and other released dynamics corpora.}
-DynaDojo \citep{bhamidipaty2023dynadojo} is an extensible platform for
-benchmarking how SysID algorithms scale with training samples, system
-complexity, and target error, over a library of $\sim$20 generic ODE/chaotic
-systems. It does not include control-specific nonlinearities (deadzone,
-saturation, hysteresis, drivetrain compliance) or an excitation/rate axis, and
-carries no identifiability annotations. \citet{ullah2026nanobench} release a
-real-hardware (Crazyflie 2.1) multi-task SysID/control/state-estimation
-benchmark, evidence the community values multi-axis benchmark design even
-outside the synthetic setting PLANTFORGE occupies.
+DynaDojo \citep{bhamidipaty2023dynadojo} benchmarks how SysID algorithms
+scale with training samples, system complexity, and target error over
+$\sim$20 generic ODE/chaotic systems, but without control-specific
+nonlinearities (deadzone, saturation, hysteresis, drivetrain compliance), an
+excitation/rate axis, or identifiability annotations.
+\citet{ullah2026nanobench} release a real-hardware (Crazyflie 2.1) multi-task
+SysID/control/state-estimation benchmark, evidence the community values
+multi-axis design even outside the synthetic setting PLANTFORGE occupies.
 
 \paragraph{Real-measured benchmarks.}
 The community's default real-data benchmarks --- Silverbox, Wiener-Hammerstein,
 Bouc-Wen \citep{noel2020boucwen}, Cascaded Tanks \citep{wigren2013three,
-schoukens2019nonlinear} --- are fixed, single-record, real-measured systems
-with no parameter ground truth. We evaluate zero-shot against three of the
-four (Section~\ref{sec:realplant}); a classical baseline outperforming our
-trained transformers on those benchmarks (Section~\ref{sec:baselines}) is
-itself evidence for why a synthetic corpus with known parameters and
-controllable axes is a useful complement, not a
-replacement, for this real-measured suite.
+schoukens2019nonlinear} --- are fixed, single-record systems with no
+parameter ground truth. We evaluate zero-shot against three of four
+(Section~\ref{sec:realplant}); a classical baseline outperforming our
+trained transformers on them (Section~\ref{sec:baselines}) is itself
+evidence a synthetic corpus with known parameters is a useful complement,
+not replacement, for this suite.
 
 \paragraph{Classical nonlinear system identification and identifiability.}
 PLANTFORGE's ARX/NARX baseline (Section~\ref{sec:baselines}) and per-instance
 Fisher-information identifiability annotations (Section~\ref{sec:corpus},
 tested in Section~\ref{sec:identifiability}) sit within a mature classical
 literature: black-box nonlinear model structures are surveyed by
-\citet{sjoberg1995nonlinear}, and NARMAX methods specifically --- including the
-free-run simulation instability our degree-2 NARX baseline reproduces
-empirically --- by \citet{billings2013nonlinear}. The Fisher-information/
-Cram\'er-Rao formalism our \texttt{identifiability.py} implements is standard
-system-identification theory \citep{ljung1999system}; \citet{hjalmarsson2005experiment}
-surveys the connection from experiment/excitation design to identification
-accuracy that motivates our excitation axis, against whose usual assumption
-(better-designed excitations $\to$ better identifiability $\to$ presumed more
-useful data) our null result in Section~\ref{sec:identifiability} is a direct,
-non-obvious counterpoint. \citet{aguirre2010prediction} study the same
-prediction-error-vs.-simulation-error distinction our ARX free-run protocol
-turns on. Excitation design specifically --- multisine and PRBS signals, both
-implemented in our \texttt{excitation.py} --- is treated at length by
-\citet{pintelon2012system}.
+\citet{sjoberg1995nonlinear}, and NARMAX methods --- including the free-run
+instability our degree-2 NARX baseline reproduces --- by
+\citet{billings2013nonlinear}. Our Fisher-information/Cram\'er-Rao formalism
+is standard theory \citep{ljung1999system}; \citet{hjalmarsson2005experiment}
+surveys experiment/excitation design's link to identification accuracy,
+against whose usual assumption (better excitations $\to$ better
+identifiability $\to$ more useful data) our null result in
+Section~\ref{sec:identifiability} is a direct counterpoint.
+\citet{aguirre2010prediction} study the same prediction-error-vs.-simulation-error
+distinction our ARX protocol turns on; excitation design specifically ---
+multisine and PRBS, both in our \texttt{excitation.py} --- is treated at
+length by \citet{pintelon2012system}.
 
 \section{The PLANTFORGE Corpus}
 \label{sec:corpus}
@@ -504,24 +490,21 @@ is negative on balance (Figure~\ref{fig:spearman}).
   \label{fig:spearman}
 \end{figure}
 
-\paragraph{Interpretation.} We propose the negative sign reflects a real
-mechanistic decoupling rather than a null result: rel-CRLB measures
-\emph{parameter-recovery} difficulty, not \emph{prediction} difficulty. A
-parameter that is hard to identify from data is typically one with little
-influence on the output trajectory --- so an in-context predictor does not need
-to infer accurately what barely affects $y$ in the first place. Under this
-reading, the annotations remain valuable corpus metadata (e.g.\ for
-excitation-design studies, where they are the intended quantity of interest)
-but are not, and should not be marketed as, a prediction-difficulty predictor.
-A secondary methodological finding: naive quartile-binned \emph{means} of
+\paragraph{Interpretation.} We propose the negative sign reflects real
+mechanistic decoupling, not a null result: rel-CRLB measures
+\emph{parameter-recovery} difficulty, not \emph{prediction} difficulty --- a
+hard-to-identify parameter typically has little influence on the output, so
+an in-context predictor need not infer what barely affects $y$. The
+annotations remain valuable corpus metadata (e.g.\ for excitation-design
+studies) but should not be marketed as a prediction-difficulty predictor. A
+secondary methodological finding: naive quartile-binned \emph{means} of
 per-instance nMSE show a dramatic apparent upward trend (1.5$\times10^3 \to
 1.6\times10^9$ across quartiles) purely because per-instance nMSE has an
-extremely heavy right tail (near-zero query-horizon power inflates the ratio);
-the quartile \emph{medians} are flat (0.037, 0.037, 0.040, 0.021,
-Figure~\ref{fig:quartile}) --- the mean-based framing we initially reported for
-this experiment before catching the confound above was itself a symptom of the
-same heavy-tail artifact, and we flag it explicitly so the failure mode is
-documented, not just quietly fixed.
+extremely heavy right tail; the quartile \emph{medians} are flat (0.037,
+0.037, 0.040, 0.021, Figure~\ref{fig:quartile}) --- our own initial
+mean-based framing for this experiment was itself a symptom of the same
+heavy-tail artifact, flagged here so the failure mode is documented, not
+just quietly fixed.
 
 \begin{figure}[h]
   \centering
@@ -546,52 +529,39 @@ independent of whether the transformer architecture itself is currently the
 best tool for the job.
 
 \paragraph{Scope of real-plant validation.} We validate zero-shot on 3 of the 4
-real benchmarks named in our original design motivation (Silverbox, Cascaded
-Tanks, Bouc-Wen); only Wiener-Hammerstein Process Noise remains excluded, by
-record length, explained in Section~\ref{sec:realplant}. Real-plant nMSE is
-computed over $\leq$8 non-overlapping windows per dataset; the transformer's
-reported variance is over training seeds on this fixed window set, not over
-window sampling, and the ARX comparison point is a single deterministic run
---- the 11--342$\times$ margins are far larger than plausible window-sampling
-noise, but this should be read as a first zero-shot probe, not an exhaustive
-real-plant evaluation. Bouc-Wen's wh\_only variance across seeds (std 0.848 on
-a mean of 2.537) is the largest relative variance of any real-plant number we
-report, and a single-seed preview of this exact cell showed the opposite
-model ranking before the remaining four seeds were trained
-(Section~\ref{sec:realplant}) --- a reminder that even our 5-seed standard is
-not immune to high-variance cells, and that per-cell variance, not just the
-headline mean, is worth reporting when re-using these numbers.
+real benchmarks named in our design motivation (Silverbox, Cascaded Tanks,
+Bouc-Wen); only Wiener-Hammerstein Process Noise is excluded, by record
+length (Section~\ref{sec:realplant}). Real-plant nMSE uses $\leq$8
+non-overlapping windows per dataset (variance is over training seeds, not
+window sampling); the ARX comparison is a single deterministic run. The
+11--342$\times$ margins dwarf plausible window-sampling noise, but this is a
+first zero-shot probe, not an exhaustive evaluation. Bouc-Wen's
+\texttt{wh\_only} variance (std 0.848 on a mean of 2.537) is our largest
+relative real-plant variance, and a single-seed preview of this cell showed
+the opposite ranking before the full 5-seed run (Section~\ref{sec:realplant})
+--- a reminder that per-cell variance, not just the headline mean, matters.
 
 \paragraph{Family coverage and held-out-family choice.} We hold out a single
-family (\texttt{backlash}) throughout Sections~\ref{sec:headline}--\ref{sec:identifiability}. We ran the full leave-one-family-out sweep flagged as future
-work in an earlier draft of this paper: training on each of the other four
-families as the sole held-out choice (5 seeds each, \texttt{corpus} recipe;
-4 seeds for \texttt{boucwen}, after one seed diverged to non-finite weights
-during training and was excluded). Table~\ref{tab:loo} shows the answer is
-more interesting than either ``representative'' or ``outlier'': the corpus's
-five families split into two clear difficulty tiers. \texttt{backlash} and
-\texttt{drivetrain} are indistinguishable at $n=5$ seeds at $\sim$0.29--0.30
-held-out nMSE --- their means differ by less than either family's
-seed-to-seed standard deviation, and their $\pm1\sigma$ bands overlap
-substantially --- roughly 6--8$\times$ higher than the other three families
-at $\sim$0.035--0.047, which each score \emph{below} the trained-family-average
-reference even when held out (Table~\ref{tab:loo}). We note this reference
-averages over four families including the two hard ones, so it is an upper
-reading of in-distribution difficulty, not each easy family's own
-in-distribution nMSE --- the safe reading is that holding these three out is
-nearly free, not that it beats training on them. This recontextualizes the
-headline cross-family gap (Section~\ref{sec:headline}, Table~\ref{tab:headline}):
-the 14--18$\times$ figure is specific to \texttt{backlash}, and cross-family
-difficulty is concentrated in two of five families rather than being a
-uniform property of family transfer. \texttt{drivetrain}'s difficulty here is
-consistent with it already being the hardest family for held-out-\emph{rate}
-transfer in Table~\ref{tab:headline} ($8.0\times$ at dt=0.05): its resonant
-two-inertia dynamics resist both axes of transfer, not just rate, while
-\texttt{backlash}'s discontinuous deadzone is the only other family that
-resists family-level holdout this strongly. The corpus's five
-families still do not span every control nonlinearity of interest (no
-multi-input/multi-output plants, no time-varying parameters within a
-trajectory).
+family (\texttt{backlash}) throughout Sections~\ref{sec:headline}--\ref{sec:identifiability}. A full leave-one-family-out sweep (5 seeds/family,
+\texttt{corpus} recipe; \texttt{boucwen} at $n=4$ after one seed diverged to
+non-finite weights) shows the corpus's five families split into two
+difficulty tiers rather than one representative-or-outlier case
+(Table~\ref{tab:loo}). \texttt{backlash} and \texttt{drivetrain} are
+indistinguishable at $\sim$0.29--0.30 held-out nMSE (means differ by less
+than either's seed-to-seed std, $\pm1\sigma$ bands overlap) --- 6--8$\times$
+higher than the other three families ($\sim$0.035--0.047), which score
+\emph{below} the trained-family-average reference when held out (an
+upper-bound reference averaged over 4 families including the 2 hard ones,
+not each easy family's true in-distribution nMSE --- read as ``nearly free
+to hold out,'' not ``beats training on it''). This recontextualizes the
+headline cross-family gap (Section~\ref{sec:headline}): the 14--18$\times$
+figure is specific to \texttt{backlash}, not a uniform property of family
+transfer. \texttt{drivetrain}'s difficulty is consistent with it already
+being hardest for held-out-\emph{rate} transfer ($8.0\times$,
+Table~\ref{tab:headline}): its resonant two-inertia dynamics resist both
+transfer axes, while \texttt{backlash}'s deadzone is the only other family
+that does. The corpus's five families still omit multi-input/multi-output
+plants and time-varying parameters within a trajectory.
 
 \begin{table}[h]
   \caption{Leave-one-family-out sweep (mean$\pm$std, \texttt{corpus} recipe):
@@ -650,68 +620,54 @@ and depth axes, exactly as expected. Together this is evidence, not merely an
 absence of counter-evidence, that the cross-family gap is a genuine open
 problem rather than an artifact of the paper's specific model size: scaling
 capacity roughly 4$\times$ in either direction leaves it within noise of
-unchanged. A methodological note we flag explicitly: the $\times$ref
-\emph{ratio} is misleading as a cross-architecture comparison metric on its
-own --- \texttt{deep} appears to have the worst relative gap ($19.1\times$) and
-\texttt{shallow} the best ($7.4\times$) largely because their reference nMSE
-differs by nearly 3$\times$ (0.0158 vs.\ 0.0432), not because their absolute
-family-transfer error does (0.3012 vs.\ 0.3198, well within either variant's
-own std) --- the same class of trap as the mean-vs-median artifact in
-Section~\ref{sec:identifiability}; absolute nMSE, not the ratio, should be
-read as primary. This check does not cover context/query-length variation; a
-sweep over those axes is left to future work.
+unchanged. The same $\times$ref ratio trap flagged above (Table~\ref{tab:loo}'s
+discussion) and in Section~\ref{sec:identifiability} recurs here: \texttt{deep}'s
+worse-looking relative gap ($19.1\times$ vs.\ \texttt{shallow}'s $7.4\times$)
+reflects a $3\times$ difference in reference nMSE (0.0158 vs.\ 0.0432), not
+absolute family-transfer error (0.3012 vs.\ 0.3198, within either variant's
+own std). This check does not cover context/query-length variation; a sweep
+over those axes is left to future work.
 
 \paragraph{On negative and inconvenient results.} Two of this paper's four
 experiments (Sections~\ref{sec:baselines} and \ref{sec:identifiability})
 produced results that complicate rather than support the paper's motivating
-narrative. We report both in full, including the Simpson's-paradox confound our
-own first identifiability analysis missed and how the corrected analysis was
-obtained, because we believe an honestly-reported null result and a caught
-methodological error are more useful to the community building on this corpus
-than a quieter framing would be. A third result, the leave-one-family-out
-sweep (Section~\ref{sec:discussion}, Table~\ref{tab:loo}), is likewise
-inconvenient rather than confirmatory: it shows our single held-out family
-was not representative, and that the headline cross-family gap is specific
-to two of five families rather than a general property of family transfer.
-We surface it in the same spirit.
+narrative; we report both in full, including the Simpson's-paradox confound
+our first identifiability analysis missed and how it was corrected, because
+an honestly-reported null result and a caught methodological error are more
+useful to the community than a quieter framing. A third result, the
+leave-one-family-out sweep (Section~\ref{sec:discussion}, Table~\ref{tab:loo}),
+is likewise inconvenient: our single held-out family was not representative,
+and the headline cross-family gap is specific to two of five families, not
+general. We surface it in the same spirit.
 
 \section{Broader Impact}
 \label{sec:broaderimpact}
 
-PLANTFORGE is a synthetic corpus of control-plant dynamics; we are not aware of
-misuse vectors specific to this release beyond those generic to open ML
-tooling. Positive impact: broadening the training distribution available for
-in-context SysID research may reduce duplicated private data-generation effort
-across the field (the ``demand proof'' motivating this corpus,
-Section~\ref{sec:related}) and, via the released identifiability annotations,
-support excitation-design research relevant to real experimental efficiency in
-control engineering.
+PLANTFORGE is a synthetic corpus of control-plant dynamics; we are not aware
+of misuse vectors beyond those generic to open ML tooling. Positive impact:
+broadening the training distribution for in-context SysID may reduce
+duplicated private data-generation effort (the ``demand proof'' motivating
+this corpus, Section~\ref{sec:related}), and the released identifiability
+annotations support excitation-design research relevant to real
+experimental efficiency in control engineering.
 
 \section{Conclusion}
 
 We released PLANTFORGE, a three-axis synthetic control-plant corpus with
-identifiability annotations, and subjected our own headline claim to
-progressively harder scrutiny: multi-seed error bars, zero-shot real-plant
-transfer on three real benchmarks, a classical baseline, a corrected
-statistical re-analysis of our identifiability hypothesis, a 5-seed
-architecture ablation, and a leave-one-family-out sweep showing cross-family
-difficulty is concentrated in two of five families (\texttt{backlash} and
-\texttt{drivetrain}), not uniform across families. The corpus's central claim
---- broader training data narrows distribution-shift gaps for in-context
-SysID transformers --- holds up under these checks, and the
-\texttt{backlash} held-out-family gap specifically holds up as
-capacity-invariant across a 15$\times$ parameter range, not an artifact of one
-model size. Two auxiliary
-claims we expected to hold did not: a classical baseline beats our trained
-transformers on every real-plant benchmark and several synthetic cells, and the
-identifiability annotations do not positively predict prediction difficulty.
-One near-miss is worth naming directly: a single-seed preview of the Bouc-Wen
-real-plant result briefly suggested a third auxiliary reversal before the full
-5-seed run corrected it back --- exactly the failure mode our multi-seed
-standard exists to catch, and a useful reminder that ``the model beat the
-baseline on this one run'' is not the same claim as ``on average.'' We report
-all of this,
-with the analysis that uncovered each, as part of the release.
+identifiability annotations, and subjected our central claim (broader
+training data narrows distribution-shift gaps for in-context SysID
+transformers) to progressively harder scrutiny: multi-seed error bars,
+zero-shot real-plant transfer, a classical ARX baseline, a corrected
+identifiability re-analysis, a 5-seed ablation, and a
+leave-one-family-out sweep. The claim holds up: the \texttt{backlash}
+held-out-family gap is capacity-invariant across a 15$\times$ range, and
+cross-family difficulty concentrates in two of five families
+(\texttt{backlash}, \texttt{drivetrain}), not uniformly. Two auxiliary
+claims did not hold: ARX beats both transformers on every real-plant
+benchmark and several synthetic cells, and identifiability annotations do
+not positively predict difficulty. A near-miss on Bouc-Wen
+(Section~\ref{sec:discussion}) shows even our multi-seed standard is not
+immune to high-variance cells. We report all of this as part of the release.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
