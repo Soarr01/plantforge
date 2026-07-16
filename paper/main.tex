@@ -676,6 +676,7 @@ to two of five families rather than a general property of family transfer.
 We surface it in the same spirit.
 
 \section{Broader Impact}
+\label{sec:broaderimpact}
 
 PLANTFORGE is a synthetic corpus of control-plant dynamics; we are not aware of
 misuse vectors specific to this release beyond those generic to open ML
@@ -714,5 +715,124 @@ with the analysis that uncovered each, as part of the release.
 
 \bibliographystyle{plainnat}
 \bibliography{references}
+
+\newpage
+\section{NeurIPS Paper Checklist}
+
+\begin{enumerate}
+
+\item {\bf Claims}
+  \begin{itemize}
+    \item Question: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?
+    \item Answer: \answerYes{}
+    \item Justification: The abstract states five concrete, hedged claims: (i) WH-only training collapses off-distribution (cross-family nMSE degradation of $93$--$118\times$); (ii) PLANTFORGE's multi-axis corpus closes the rate/excitation gap for 4 of 5 families but only halves, not closes, the cross-family gap ($93$--$118\times \to 14$--$18\times$); (iii) a classical ARX baseline outperforms both trained transformers on all three real-plant benchmarks by $11$--$342\times$; (iv) identifiability annotations do not positively predict prediction difficulty (median Spearman $r=-0.122$ across 40 cells); (v) full disclosure of a Simpson's-paradox confound in our own first identifiability analysis. Each claim is backed by a corresponding experiment (Sections~\ref{sec:headline}--\ref{sec:identifiability}) and hedged by a matching Limitations paragraph (Section~\ref{sec:discussion}) --- e.g., the cross-family-gap claim explicitly notes it is specific to the \texttt{backlash} holdout, not a general property of family transfer (Section~\ref{sec:headline}, Section~\ref{sec:discussion}, Table~\ref{tab:loo}).
+  \end{itemize}
+
+\item {\bf Limitations}
+  \begin{itemize}
+    \item Question: Does the paper discuss the limitations of the work performed by the authors?
+    \item Answer: \answerYes{}
+    \item Justification: Section~\ref{sec:discussion} devotes six paragraphs to limitations: what the paper does and does not claim; the scope of real-plant validation (window-count and single-ARX-run caveats, 3 of 4 candidate real benchmarks); family coverage and the held-out-family choice (resolved via a 5-seed leave-one-family-out sweep, Table~\ref{tab:loo}); the scope of the architecture ablation (no context/query-length sweep); and an explicit ``On negative and inconvenient results'' paragraph naming which findings complicate the paper's own motivating narrative.
+  \end{itemize}
+
+\item {\bf Theory Assumptions and Proofs}
+  \begin{itemize}
+    \item Question: For each theoretical result, does the paper provide the full set of assumptions and a complete and correct proof?
+    \item Answer: \answerNA{}
+    \item Justification: The paper contains no theoretical results or proofs; its contribution is an empirical corpus, benchmark suite, and set of controlled experiments.
+  \end{itemize}
+
+\item {\bf Experimental Result Reproducibility}
+  \begin{itemize}
+    \item Question: Does the paper fully disclose all the information needed to reproduce the main experimental results?
+    \item Answer: \answerYes{}
+    \item Justification: All corpus-generation code (family/excitation/rate definitions, exact zero-order-hold simulation, Fisher-information annotation computation), training code, and evaluation code are released under MIT (Section~\ref{sec:corpus}). Every headline number is reported as mean$\pm$std over 5 independently-seeded training runs (seeds 0--4) evaluated on a fixed set of evaluation seeds (900--905) shared across all models for paired comparison (Section~\ref{sec:experiments}). Training checkpoints are resumable and the release's training scripts are idempotent against already-finished checkpoints.
+  \end{itemize}
+
+\item {\bf Open Access to Data and Code}
+  \begin{itemize}
+    \item Question: Does the paper provide open access to the data and code, with sufficient instructions to faithfully reproduce the main experimental results?
+    \item Answer: \answerYes{}
+    \item Justification: The corpus (240{,}000 instances, CC BY 4.0) is hosted at \url{https://huggingface.co/datasets/stark4062/plantforge}; all generation, training, and evaluation code (MIT) is hosted at \url{https://github.com/Soarr01/plantforge}, including a README with exact commands for every experiment reported in this paper.
+  \end{itemize}
+
+\item {\bf Experimental Setting/Details}
+  \begin{itemize}
+    \item Question: Does the paper specify all the training and test details needed to understand the results?
+    \item Answer: \answerYes{}
+    \item Justification: Section~\ref{sec:experiments}'s preamble specifies the architecture (5-layer, 8-head, width-160 encoder-only transformer), context/query lengths (192/32 samples), the training-seed count (5, seeds 0--4), and the fixed evaluation-seed range (900--905). Section~\ref{sec:baselines} specifies the ARX/NARX2 order-selection protocol ($k\in\{2,4,8\}$, selected by one-step-ahead error on the last 32 context samples, never touching the query). Table~\ref{tab:ablation} specifies each of the 4 additional architecture variants' exact width/layer counts and parameter counts.
+  \end{itemize}
+
+\item {\bf Experiment Statistical Significance}
+  \begin{itemize}
+    \item Question: Does the paper report error bars suitably and correctly defined, or other appropriate information about the statistical significance of the experiments?
+    \item Answer: \answerYes{}
+    \item Justification: Every headline, real-plant, ablation, and leave-one-family-out number is reported as mean$\pm$std over 5 (4 in one disclosed exception, Table~\ref{tab:loo}'s \texttt{boucwen} row, where one seed diverged to non-finite weights during training and was excluded) independently-seeded training runs. Section~\ref{sec:headline} explicitly discusses the limits of the $\pm1$ standard deviation heuristic used as a comparison bar (a descriptive, not multiplicity-corrected, statistic), and Section~\ref{sec:discussion} separately flags a specific high-variance cell (Bouc-Wen \texttt{wh\_only}, std 0.848 on a mean of 2.537) along with a documented single-seed-vs-5-seed reversal on that exact cell, rather than reporting only means.
+  \end{itemize}
+
+\item {\bf Experiments Compute Resource}
+  \begin{itemize}
+    \item Question: For each experiment, does the paper provide sufficient information on the computer resources needed to reproduce the experiments?
+    \item Answer: \answerYes{}
+    \item Justification: All models were trained on a single NVIDIA GeForce RTX 2080 Ti (11GB) per run; no run requires multiple GPUs. Measured wall-clock for one 10{,}000-step training run of the default (1.58M-parameter) architecture on a dedicated GPU is approximately 14--16 minutes; larger ablation variants (up to 6.24M parameters) scale roughly with parameter count. The paper's trained-model results rest on approximately 50 total 10{,}000-step training runs (5 seeds $\times$ 2 recipes for the headline result; 4 architecture variants $\times$ 5 seeds for the ablation, with the default variant's 5 seeds reused from the headline runs; 4 held-out families $\times$ 5 seeds for the leave-one-family-out sweep, with the \texttt{backlash} family's 5 seeds likewise reused) --- on the order of 12--13 GPU-hours total. Corpus generation itself is CPU-bound and separate from this budget: approximately 14 hours wall-clock on a heavily-shared, CPU-contended machine (see the released datasheet).
+  \end{itemize}
+
+\item {\bf Code Of Ethics}
+  \begin{itemize}
+    \item Question: Does the research conducted in the paper conform, in every respect, with the NeurIPS Code of Ethics?
+    \item Answer: \answerYes{}
+    \item Justification: This work uses only synthetic, procedurally generated control-plant trajectories and publicly released real-plant system-identification benchmarks (Silverbox, Cascaded Tanks, Bouc-Wen), none of which involve human subjects, personally identifiable information, or scraped personal data. We are not aware of any way in which this research violates the NeurIPS Code of Ethics.
+  \end{itemize}
+
+\item {\bf Broader Impacts}
+  \begin{itemize}
+    \item Question: Does the paper discuss both potential positive societal impacts and negative societal impacts of the work performed?
+    \item Answer: \answerYes{}
+    \item Justification: Section~\ref{sec:broaderimpact} discusses positive impact (reducing duplicated private data-generation effort across the in-context SysID literature, and supporting excitation-design research via the released identifiability annotations) and states that we are not aware of misuse vectors specific to this release beyond those generic to open ML tooling.
+  \end{itemize}
+
+\item {\bf Safeguards}
+  \begin{itemize}
+    \item Question: Does the paper describe safeguards for the responsible release of models with a high risk for misuse?
+    \item Answer: \answerNA{}
+    \item Justification: The released models are small (1.58M--6.24M parameter) system-identification transformers trained exclusively on synthetic control-plant trajectories; they have no generative, language, or biological capability and no plausible high-misuse-risk profile of the kind this question targets. No additional safeguards beyond the license terms are applicable.
+  \end{itemize}
+
+\item {\bf Licenses}
+  \begin{itemize}
+    \item Question: Are the creators or original owners of assets used in the paper properly credited, and are the license and terms of use explicitly mentioned and properly respected?
+    \item Answer: \answerYes{}
+    \item Justification: All existing assets used are cited with their creators and terms respected: Silverbox and Cascaded Tanks (nonlinearbenchmark.org, Section~\ref{sec:realplant}), Bouc-Wen \citep{noel2020boucwen} (CC BY-SA 4.0, DOI 10.4121/12967592, Section~\ref{sec:realplant}), the NeurIPS 2024 style template, and the datasheet template of \citet{gebru2021datasheets} used for our own dataset's documentation.
+  \end{itemize}
+
+\item {\bf Assets}
+  \begin{itemize}
+    \item Question: Are new assets introduced in the paper well documented, and is the documentation provided alongside the assets?
+    \item Answer: \answerYes{}
+    \item Justification: The new assets released by this paper --- the PLANTFORGE corpus and all generation/training/evaluation code --- are documented via a datasheet following the \citet{gebru2021datasheets} template (motivation, composition, collection process, uses, distribution, and maintenance), a code license (MIT), and a data license (CC BY 4.0), released alongside the corpus and code (Section~\ref{sec:corpus}, and the repositories linked in Item 5 above).
+  \end{itemize}
+
+\item {\bf Crowdsourcing and Research with Human Subjects}
+  \begin{itemize}
+    \item Question: For crowdsourcing experiments and research with human subjects, does the paper include the full text of instructions given to participants and details about compensation, if any?
+    \item Answer: \answerNA{}
+    \item Justification: This paper involves no crowdsourcing and no human subjects research.
+  \end{itemize}
+
+\item {\bf IRB Approvals}
+  \begin{itemize}
+    \item Question: Did the paper describe any potential participant risks and obtain Institutional Review Board approvals, if applicable?
+    \item Answer: \answerNA{}
+    \item Justification: No human subjects were involved; no IRB review was required.
+  \end{itemize}
+
+\item {\bf Declaration of LLM usage}
+  \begin{itemize}
+    \item Question: Does the paper describe the usage of LLMs if it is an important, original, or non-standard component of the core methods in this research?
+    \item Answer: \answerNA{}
+    \item Justification: Large language models are not a methodological component of the corpus generator, the excitation/identifiability code, or the trained in-context system-identification transformers themselves --- all of which are ordinary procedural/simulation code and standard transformer training, with no LLM in the loop at generation or inference time. In the interest of transparency beyond what this question strictly requires: an LLM-based coding assistant was used throughout this project's implementation, experiment orchestration, and paper drafting, under the sole author's direction and review, with every reported number independently re-verified against live code execution before inclusion in this paper.
+  \end{itemize}
+
+\end{enumerate}
 
 \end{document}

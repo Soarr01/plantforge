@@ -10,12 +10,25 @@ for Papers and the official NeurIPS Paper Checklist guide (both fetched
 2026-07-16 — re-verify against whatever cycle you actually target, since
 these requirements change year to year).
 
-**Update 2026-07-16**: single-blind mode chosen — the paper now uses
+**Update 2026-07-16 (a)**: single-blind mode chosen — the paper now uses
 `\usepackage[preprint]{neurips_2024}` with real author info (Huynh Phuoc
 Thien Nguyen, National Central University) and the self-citation in
 `references.bib` links the real HuggingFace dataset URL. §1 item 5 and §2
-below are resolved; the rest of this checklist (items 8, 9, 11, 16, plus
-Croissant/page-limit) is still open.
+below are resolved.
+
+**Update 2026-07-16 (b)**: the formal NeurIPS Paper Checklist (§1, all 16
+items) is now written into `paper/main.tex` as a real section (after the
+bibliography, using the template's `\answerYes`/`\answerNo`/`\answerNA`
+macros), using the draft answers from §1's table below, finalized. Items 8
+(compute resources) and 9/11 (ethics/safeguards) used the draft answers
+as-is; item 16 (LLM usage) went with the "N/A for core methods, disclosed
+transparently anyway" framing rather than asking for further sign-off,
+consistent with this project's established transparency norm — revisit
+its exact wording before final submission if a stricter framing is
+preferred. Recompiled clean (16 pages total; checklist adds ~6 pages,
+excluded from the venue's main-text page count). Still open: Croissant/RAI
+metadata (§5) and the main-text page-limit risk (§4, unaffected by the
+checklist addition since it's excluded from the count either way).
 
 ## 0. Timeline reality check — read this first
 
