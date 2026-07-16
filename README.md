@@ -231,7 +231,9 @@ distributed separately via Hugging Face — see below): CC BY 4.0 — see
 
 Full "Datasheets for Datasets"-style documentation of the corpus (motivation,
 composition, collection process, uses, distribution, maintenance):
-[`docs/DATASHEET.md`](docs/DATASHEET.md).
+[`docs/DATASHEET.md`](docs/DATASHEET.md). Machine-readable Croissant metadata
+(core + Responsible AI fields), validated against the official `mlcroissant`
+library with zero errors/warnings: [`croissant.json`](croissant.json).
 
 The reference corpus (240,000 instances, 583 MB, `--instances 4000`) is
 regenerable locally via `python -m plantforge.corpus --instances 4000`, or

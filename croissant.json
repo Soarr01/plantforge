@@ -1,0 +1,183 @@
+{
+  "@context": {
+    "@language": "en",
+    "@vocab": "https://schema.org/",
+    "sc": "https://schema.org/",
+    "cr": "http://mlcommons.org/croissant/",
+    "dct": "http://purl.org/dc/terms/",
+    "rai": "http://mlcommons.org/croissant/RAI/",
+    "citeAs": "cr:citeAs",
+    "column": "cr:column",
+    "conformsTo": "dct:conformsTo",
+    "data": {
+      "@id": "cr:data",
+      "@type": "@json"
+    },
+    "dataType": {
+      "@id": "cr:dataType",
+      "@type": "@vocab"
+    },
+    "equivalentProperty": "cr:equivalentProperty",
+    "examples": {
+      "@id": "cr:examples",
+      "@type": "@json"
+    },
+    "extract": "cr:extract",
+    "field": "cr:field",
+    "fileObject": "cr:fileObject",
+    "fileProperty": "cr:fileProperty",
+    "fileSet": "cr:fileSet",
+    "format": "cr:format",
+    "samplingRate": "cr:samplingRate",
+    "includes": "cr:includes",
+    "isLiveDataset": "cr:isLiveDataset",
+    "jsonPath": "cr:jsonPath",
+    "key": "cr:key",
+    "md5": "cr:md5",
+    "parentField": "cr:parentField",
+    "path": "cr:path",
+    "recordSet": "cr:recordSet",
+    "references": "cr:references",
+    "regex": "cr:regex",
+    "repeated": "cr:repeated",
+    "replace": "cr:replace",
+    "separator": "cr:separator",
+    "source": "cr:source",
+    "subField": "cr:subField",
+    "transform": "cr:transform"
+  },
+  "@type": "sc:Dataset",
+  "name": "PLANTFORGE",
+  "description": "A procedurally generated corpus of 240,000 control-plant system-identification instances spanning 5 nonlinearity families (stribeck friction, backlash/deadzone, saturation, Bouc-Wen hysteresis, resonant drivetrain) x 4 excitation classes (PRBS, multisine, chirp, closed-loop) x 3 sampling rates (10/20/50 Hz), jointly varied -- no existing corpus in the in-context system-identification literature varies all three axes together. Each instance carries a ground-truth physical parameter vector, an (u, y) input/output trajectory pair simulated with exact zero-order-hold discretization, and per-instance Fisher-information identifiability annotations (relative Cramer-Rao lower bound per parameter, log10 FIM condition number). Released to make the narrowness of the incumbent Wiener-Hammerstein-only training recipe measurable and fixable.",
+  "url": "https://huggingface.co/datasets/stark4062/plantforge",
+  "sameAs": "https://github.com/Soarr01/plantforge",
+  "license": "https://creativecommons.org/licenses/by/4.0/",
+  "conformsTo": ["http://mlcommons.org/croissant/1.1", "http://mlcommons.org/croissant/RAI/1.0"],
+  "citeAs": "@misc{plantforgedataset, title={{PLANTFORGE} corpus}, author={Nguyen, Huynh Phuoc Thien}, howpublished={\\url{https://huggingface.co/datasets/stark4062/plantforge}}, year={2026}}",
+  "creator": {
+    "@type": "sc:Person",
+    "name": "Huynh Phuoc Thien Nguyen",
+    "email": "stark4062@gmail.com",
+    "affiliation": {
+      "@type": "sc:CollegeOrUniversity",
+      "name": "National Central University"
+    }
+  },
+  "datePublished": "2026-07-14",
+  "version": "1.0.0",
+  "isLiveDataset": false,
+
+  "distribution": [
+    {
+      "@type": "cr:FileObject",
+      "@id": "hf-repo",
+      "name": "hf-repo",
+      "description": "The Hugging Face dataset repository, as a clonable git remote.",
+      "contentUrl": "https://huggingface.co/datasets/stark4062/plantforge",
+      "encodingFormat": "git+https",
+      "sha256": "3872f558f6fd214e8383f2107f387be730ff47f8 -- NOTE: this is the repository's git commit hash (SHA-1, 40 hex chars) at the time this file was written, not a SHA-256 content checksum. Recorded here (the only checksum-typed field available for a root-level FileObject) because a live git repository has no single meaningful SHA-256 to report; treat it as a version pin, not an integrity hash. Individual files below (e.g. registry-json) carry real SHA-256 checksums."
+    },
+    {
+      "@type": "cr:FileSet",
+      "@id": "corpus-shards",
+      "name": "corpus-shards",
+      "description": "60 shard files, one per (family, excitation, rate) cell. Filename pattern: corpus/{family}_{excitation}_dt{rate_hz}hz.pt, family in {stribeck, backlash, saturate, boucwen, drivetrain}, excitation in {prbs, multisine, chirp, closedloop}, rate_hz in {10, 20, 50}. Each file is a single PyTorch-pickled Python dict (torch.save/torch.load), NOT individually column/record-extractable by a generic Croissant reader -- documented here at the field level for human and downstream-tooling reference; loading requires this project's own code (see https://github.com/Soarr01/plantforge) or a plain torch.load call. Per-shard dict keys, spot-checked directly against corpus/backlash_prbs_dt10hz.pt: 'u' and 'y' (input/output trajectories, float32 tensors of shape (T, B), T = round(12.8s / dt) samples -- 128/256/640 for dt=0.10/0.05/0.02s respectively, B = 4000 instances per shard); 'theta' (ground-truth physical parameter vector, float32 (B, K), K = number of named parameters for this family, e.g. K=5 for backlash: c0, c1, db, p1, p2 -- see each shard's own 'keys' entry for the per-family parameter names, K varies by family); 'rel_crlb' (per-parameter relative Cramer-Rao lower bound identifiability annotation, float32 (B, K), same K as theta); 'log10_cond' (log10 Fisher Information Matrix condition number, float32 scalar per instance, shape (B,)); 'dt', 'family', 'excitation' (shard-level scalar metadata, redundant with the filename, included for self-description when a shard is loaded standalone). This limitation (non-mechanized extraction of tensor content) is also flagged under rai:dataLimitations below.",
+      "containedIn": { "@id": "hf-repo" },
+      "encodingFormat": "application/x-pytorch",
+      "includes": "corpus/*.pt"
+    },
+    {
+      "@type": "cr:FileObject",
+      "@id": "registry-json",
+      "name": "registry-json",
+      "description": "Corpus-level manifest: family/excitation/rate enumerations, trajectory physical duration, instances-per-cell count.",
+      "containedIn": { "@id": "hf-repo" },
+      "contentUrl": "https://huggingface.co/datasets/stark4062/plantforge/resolve/main/corpus/registry.json",
+      "encodingFormat": "application/json",
+      "sha256": "166eec9a82d0b9d10c92b0ecf173e6b0a87dc2c9d82ef104f5c06fef6ac08dcf"
+    }
+  ],
+
+  "recordSet": [
+    {
+      "@type": "cr:RecordSet",
+      "@id": "shards",
+      "name": "shards",
+      "description": "One record per shard file (60 total = 5 families x 4 excitations x 3 rates). family/excitation/rate_hz are recoverable from the filename by construction; instance_count is a corpus-wide constant confirmed against corpus/registry.json (instances_per_cell=4000) and, for one shard (corpus/backlash_prbs_dt10hz.pt), independently spot-checked against the file's actual tensor shapes. Per-instance tensor content (u, y, theta, rel_crlb, log10_cond) within each shard is documented at the field level in the corpus-shards FileSet's description above, not as a separate RecordSet -- see that description and rai:dataLimitations below for why (PyTorch pickle content is not mechanically extractable by a generic Croissant reader).",
+      "field": [
+        {
+          "@type": "cr:Field",
+          "@id": "shards/family",
+          "name": "family",
+          "description": "Nonlinearity family: one of stribeck, backlash, saturate, boucwen, drivetrain.",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": { "@id": "corpus-shards" },
+            "extract": { "fileProperty": "filename" },
+            "transform": { "regex": "^([a-z]+)_[a-z]+_dt[0-9]+hz\\.pt$" }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "shards/excitation",
+          "name": "excitation",
+          "description": "Excitation class: one of prbs, multisine, chirp, closedloop.",
+          "dataType": "sc:Text",
+          "source": {
+            "fileSet": { "@id": "corpus-shards" },
+            "extract": { "fileProperty": "filename" },
+            "transform": { "regex": "^[a-z]+_([a-z]+)_dt[0-9]+hz\\.pt$" }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "shards/rate_hz",
+          "name": "rate_hz",
+          "description": "Sampling rate in Hz (10, 20, or 50; dt = 1/rate_hz seconds).",
+          "dataType": "sc:Integer",
+          "source": {
+            "fileSet": { "@id": "corpus-shards" },
+            "extract": { "fileProperty": "filename" },
+            "transform": { "regex": "^[a-z]+_[a-z]+_dt([0-9]+)hz\\.pt$" }
+          }
+        },
+        {
+          "@type": "cr:Field",
+          "@id": "shards/instance_count",
+          "name": "instance_count",
+          "description": "Number of instances in this shard. Constant across all 60 shards at the released instance count; confirmed against corpus/registry.json's instances_per_cell field and, for one shard, against the file's actual tensor shapes directly.",
+          "dataType": "sc:Integer",
+          "value": 4000
+        }
+      ]
+    }
+  ],
+
+  "rai:dataCollection": "Not collected: procedurally generated. Physical parameters theta are sampled per-family from documented prior ranges (families.py:sample); excitation signals are generated in physical time (excitation.py); the plant is simulated forward via family-specific Stepper objects with exact zero-order-hold at the discretization rate and internal substepping (<=2ms) for state-nonlinear families, so the same continuous-time plant is consistent across all three sampling rates by construction. Fisher-information identifiability annotations are computed analytically/numerically per instance from the same simulator. Generation is deterministic given a seed and instance count; the released reference corpus (4000 instances/cell) is a static snapshot.",
+  "rai:dataCollectionType": "Synthetic / procedurally simulated -- no collection from human subjects, sensors, or the physical world.",
+  "rai:dataCollectionTimeframe": "2026-07-13 to 2026-07-14 (reference corpus generation run, ~14 hours wall-clock on a heavily-shared CPU-contended machine, measured from shard mtimes; the generator is resumable and re-runnable at any instance count via python -m plantforge.corpus).",
+  "rai:dataCollectionMissingData": "No instance has missing fields. Some (instance, excitation) draws under closed-loop excitation diverge (e.g. a PI loop against a resonant drivetrain instance going unstable); such draws are dropped during generation and never retained with missing/NaN fields (see corpus.gen_cell's finite-check filtering).",
+  "rai:dataAnnotationProtocol": "The rel_crlb and log10_cond identifiability annotations are computed, not human-annotated: analytically/numerically from the Fisher Information Matrix of each instance's own simulator, using the same code that generated the instance (identifiability.py). No human or crowdsourced annotation is involved anywhere in this dataset.",
+  "rai:dataUseCases": [
+    "Training/evaluating in-context system-identification transformers across held-out family, rate, and excitation splits",
+    "Zero-shot transfer evaluation against real measured plants (Silverbox, Cascaded Tanks, Bouc-Wen)",
+    "Classical system-identification baseline comparison (ARX, NARX)",
+    "Testing whether Fisher-information identifiability annotations predict in-context prediction difficulty",
+    "Parameter-recovery / classical system-identification benchmarking (using theta as a regression target, distinct from this project's own next-step-prediction use)",
+    "Excitation-design research (which excitation classes best identify which parameters, using the rel_crlb annotations directly)",
+    "Sample-rate robustness studies for system-identification methods generally, not limited to in-context transformers"
+  ],
+  "rai:dataLimitations": [
+    "Entirely synthetic: does not cover all real-world plant nonlinearities (no multi-input/multi-output plants, no time-varying parameters within a trajectory). Should not be presented as a substitute for real-plant validation -- this project's own zero-shot real-plant results show synthetic-only training transfers imperfectly, and a classical ARX baseline outperforms both trained transformers on several real-plant and synthetic cells.",
+    "A leave-one-family-out sweep (5-seed) found the corpus's 5 families split into two difficulty tiers for cross-family transfer (backlash and drivetrain hard, the other three easy) rather than being uniformly interchangeable -- users generalizing findings across all 5 families should be aware difficulty is not evenly distributed.",
+    "Per-shard tensor data (u, y, theta, rel_crlb, log10_cond) is stored as PyTorch-pickled tensor dicts, a format the Croissant core spec's standard column/regex extraction model does not natively parse (see the corpus-shards FileSet's description for the verified real schema); a generic Croissant-compliant loader can enumerate and describe the 60 shard files but cannot mechanically extract per-instance tensor values without this project's own loading code.",
+    "This metadata file was validated with the official mlcroissant Python library (v1.1.0): it loads cleanly with zero structural errors and zero warnings (mlc.Dataset(jsonld=...) succeeds). Full end-to-end record materialization via ds.records('shards') was attempted but did not enumerate files in this environment -- the FileSet's containedIn FileObject uses encodingFormat git+https (a real, supported mlcroissant download strategy for git-LFS-backed repositories like this one), but the automated git-clone-based download step did not produce a populated local cache during testing, a known rough edge for git/LFS-hosted non-Parquet datasets rather than a defect in this file's structure. Downloading via this project's own tooling (huggingface_hub.hf_hub_download, or git clone directly) is unaffected and is the documented, tested way to obtain the data (see README.md)."
+  ],
+  "rai:dataBiases": [
+    "Family coverage is a fixed, hand-chosen set of 5 nonlinearity types plus a Wiener-Hammerstein baseline family, not an exhaustive or randomly sampled survey of real control-plant nonlinearities -- the set reflects what the authors judged useful for studying multi-axis transfer, not a claim of representativeness of all real plants.",
+    "Physical parameter priors (per-family sampling ranges in families.py) are hand-specified design choices, not fit to any particular real-plant population -- see families.py for the exact documented ranges."
+  ],
+  "rai:dataSocialImpact": "Positive: broadening the training distribution available for in-context system-identification research may reduce duplicated private data-generation effort across the field (the prior incumbent recipe requires every paper to privately regenerate Wiener-Hammerstein-only data), and the released identifiability annotations support excitation-design research relevant to real experimental efficiency in control engineering. We are not aware of misuse vectors specific to this release beyond those generic to open synthetic ML datasets.",
+  "rai:personalSensitiveInformation": "None. All data is synthetic simulation output; no personal, sensitive, or human-subject data of any kind is present or was used to generate this corpus.",
+  "rai:dataReleaseMaintenancePlan": "The corpus generator is deterministic given a seed and instance count; the released reference corpus (4000 instances/cell, 240,000 instances total) is a static, versioned snapshot (this file's version field). Future updates (e.g. additional families, additional real-plant validation) will be released as a new versioned corpus, not a silent overwrite of this release. Maintained by the repository's maintainers; issues/questions via the GitHub repository's issue tracker (https://github.com/Soarr01/plantforge/issues) or the Hugging Face dataset's community tab."
+}

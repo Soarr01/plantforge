@@ -148,8 +148,12 @@ repository README).
 
 **How will the dataset be distributed?**
 As the same `.pt` shard files this repository's `corpus.py` generates
-(PyTorch tensor dicts), plus this datasheet and a Hugging Face dataset card.
-Regenerable from source at any instance count via `python -m plantforge.corpus`.
+(PyTorch tensor dicts), plus this datasheet, a Hugging Face dataset card, and
+machine-readable Croissant metadata (core + Responsible AI fields) at
+[`croissant.json`](../croissant.json) in the repository root — validated
+against the official `mlcroissant` Python library (v1.1.0), zero structural
+errors or warnings. Regenerable from source at any instance count via
+`python -m plantforge.corpus`.
 
 **License:** CC BY 4.0 — see `LICENSE-DATA`. (The code in this repository is
 separately licensed under MIT — see `LICENSE`.)

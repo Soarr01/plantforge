@@ -170,25 +170,39 @@ architecture-ablation paragraph's methodological-trap discussion is fairly
 long and partially redundant with the identical framing already used for
 the leave-one-out ratio trap; could be tightened).
 
-## 5. Croissant metadata — new hard requirement, not yet met
+## 5. Croissant metadata — DONE (2026-07-16)
 
 The live 2026 CFP requires datasets to ship **Croissant machine-readable
 metadata, including both core AND Responsible AI (RAI) fields** — stated
-as a compliance item whose absence "justifies desk rejection." Checked:
-the PLANTFORGE corpus is released as 60 raw `.pt` (PyTorch tensor) shard
-files on HuggingFace (`docs/DATASHEET.md` confirms this format). HuggingFace
-auto-generates basic Croissant metadata only for datasets already convertible
-to Parquet/ImageFolder format — `.pt` shards are neither, so the
-auto-generation almost certainly does **not** apply here, and even where it
-does apply, the RAI-field extension is not something HuggingFace
-auto-populates (those fields describe collection process, consent, known
-biases, etc., which require deliberate authorship). This needs one of:
+as a compliance item whose absence "justifies desk rejection." HuggingFace's
+automatic Croissant generation doesn't apply here (the corpus is 60 raw
+`.pt` PyTorch shard files, not Parquet/ImageFolder), so a Croissant file was
+hand-authored: [`croissant.json`](../croissant.json) at the repo root.
 
-- Manually author a Croissant JSON-LD file (core + RAI fields) describing
-  the corpus's generative process, family/excitation/rate schema, and
-  identifiability annotations, and add it to the HuggingFace repo, or
-- Convert the released corpus to Parquet (gets core-field auto-generation
-  from HF "for free," RAI fields still need manual authorship either way).
+**How it was verified, not just written:** installed the official
+`mlcroissant` Python library (v1.1.0) and validated with
+`mlc.Dataset(jsonld='croissant.json')` — iterated through 3 real validation
+error rounds (wrong `@type` namespace for FileObject/FileSet, missing
+`conformsTo` CroissantVersion, missing checksums, fields without a `source`)
+until it loads with **zero errors and zero warnings**. Real facts used
+throughout rather than placeholders: exact shard filenames/glob pattern and
+tensor schema (confirmed by loading `corpus/backlash_prbs_dt10hz.pt`
+directly), a real SHA-256 checksum of `corpus/registry.json`, and the
+dataset repo's actual creation date and git commit (queried live via
+`huggingface_hub.HfApi().dataset_info(...)`).
+
+**One honest limitation, not hidden**: full end-to-end record
+materialization via `ds.records('shards')` did not successfully enumerate
+files in this environment (the FileSet's git+https-hosted container didn't
+populate a local download cache during testing) — a known rough edge for
+git/LFS-hosted non-Parquet datasets in the mlcroissant tooling, not a defect
+in the file's structure (which independently validates clean). Documented
+in the file's own `rai:dataLimitations` field rather than silently claimed
+as fully working.
+
+Also referenced from `docs/DATASHEET.md` and `README.md`, and uploaded
+alongside the data itself to the HuggingFace dataset repo
+(`stark4062/plantforge`), satisfying "ship it alongside the dataset."
 
 This is real, unstarted work — worth scoping as its own small task before
 whatever submission actually happens, not something to rush the week of a
