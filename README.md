@@ -50,9 +50,8 @@ Both checkpoints, trained only on synthetic corpus data, evaluated **zero-shot**
 |---|---|---|---|
 | Silverbox | decimated 12× → dt≈0.0197s (~50Hz-like) | 0.958±0.217 | **0.331±0.040** |
 | Cascaded_Tanks | native dt=4.0s — 40× coarser than trained range, **extrapolation** | 0.394±0.081 | **0.084±0.043** |
+| Bouc-Wen | decimated 15× → dt=0.0200s, fetched directly from 4TU.ResearchData (not exposed by `nonlinear_benchmarks`'s pip package) | 2.537±0.848 | **1.589±0.361** |
 | WienerHammerBenchMark | **not evaluable** — total record duration (~1.5s) is shorter than one context window at any trained rate (min 4.48s) | — | — |
-
-Bouc-Wen is out of scope: not exposed by `nonlinear_benchmarks`'s public API.
 
 ## Classical baselines temper the transformer story (`baselines.py`)
 
@@ -159,6 +158,14 @@ python -m plantforge.realbench                                  # zero-shot on r
 python -m plantforge.aggregate                                  # multi-seed transfer matrix, mean±std
 python -m plantforge.baselines real                              # ARX/NARX2 baselines (add `real` for real-plant windows too)
 python -m plantforge.ident_exp                                   # identifiability-vs-difficulty experiment
+
+CUDA_VISIBLE_DEVICES=0 PF_WIDTH=80 PF_LAYERS=5 python -m plantforge.evaluate corpus   # one architecture variant
+scripts/train_ablation.sh && scripts/train_ablation_seeds.sh    # architecture ablation: 4 variants x 5 seeds
+python -m plantforge.ablation                                   # architecture ablation report, mean±std
+
+CUDA_VISIBLE_DEVICES=0 PF_HOLD_FAMILY=drivetrain python -m plantforge.evaluate corpus   # one held-out-family variant
+scripts/train_leave_one_out.sh && scripts/train_leave_one_out_seeds.sh   # leave-one-family-out sweep: 4 families x 5 seeds
+python -m plantforge.leave_one_out                               # leave-one-family-out report, mean±std
 ```
 
 `evaluate` trains in-context transformers (checkpoint-resumable per
@@ -173,10 +180,12 @@ rate (20 Hz), held-out excitations (chirp, closedloop).
   control nonlinearities, no excitation/rate/identifiability axes.
 - **nonlinearbenchmark.org** (Silverbox/WH/Bouc-Wen/Cascaded-Tanks) — the community's
   real-measured default: 5 fixed plants, no parameter truth, single records. Zero-shot
-  corpus-trained models were evaluated on Silverbox and Cascaded_Tanks (see above;
-  Bouc-Wen and WienerHammerBenchMark out of scope — no pip loader / record too short,
-  respectively). Classical ARX still beats both zero-shot transformers on these real
-  plants, so "turns the incumbent into the validator" is not yet a settled claim.
+  corpus-trained models were evaluated on Silverbox, Cascaded_Tanks, and Bouc-Wen (see
+  above; Bouc-Wen is fetched directly from 4TU.ResearchData rather than the
+  `nonlinear_benchmarks` pip package, which doesn't expose it; WienerHammerBenchMark is
+  out of scope — record too short). Classical ARX still beats both zero-shot
+  transformers on these real plants, so "turns the incumbent into the validator" is not
+  yet a settled claim.
 - **forgi86 lineage** (Forgione et al., L-CSS'23; Piga et al., IFAC'24) — regenerates
   private WH-only data per paper; the corpus's demand proof. (An earlier draft of this
   README also cited a "RAL'25" entry in this lineage; it could not be independently
@@ -190,15 +199,26 @@ rate (20 Hz), held-out excitations (chirp, closedloop).
 | `identifiability.py` | FIM / relative-CRLB annotations |
 | `corpus.py` | resumable shard generation + registry |
 | `evaluate.py` | in-context transfer experiments (headline & corpus modes), `PF_SEED`-parameterized |
-| `realbench.py` | zero-shot evaluation on real measured plants (Silverbox, Cascaded_Tanks) |
+| `realbench.py` | zero-shot evaluation on real measured plants (Silverbox, Cascaded_Tanks, Bouc-Wen) |
 | `aggregate.py` | multi-seed transfer-matrix aggregation, mean±std |
 | `baselines.py` | ARX / degree-2 polynomial NARX baselines under the in-context free-run protocol |
 | `ident_exp.py` | identifiability-annotations-vs-prediction-difficulty experiment |
+| `ablation.py` | architecture ablation (4 size variants vs. default), mean±std |
+| `leave_one_out.py` | leave-one-family-out sweep (4 alternative held-out families vs. `backlash`), mean±std |
 | `scripts/train_seeds.sh` | background-friendly, resumable multi-seed training driver |
+| `scripts/train_ablation.sh`, `scripts/train_ablation_seeds.sh` | resumable training drivers for the architecture ablation (seed 0, then seeds 1-4) |
+| `scripts/train_leave_one_out.sh`, `scripts/train_leave_one_out_seeds.sh` | resumable training drivers for the leave-one-family-out sweep (seed 0, then seeds 1-4) |
 | `figures/make_figures.py` | regenerates all paper figures from the reviewed result numbers |
 
 Full experiment results and reading notes:
-[`docs/superpowers/results/2026-07-14-experiment-results.md`](docs/superpowers/results/2026-07-14-experiment-results.md).
+[`docs/superpowers/results/2026-07-14-experiment-results.md`](docs/superpowers/results/2026-07-14-experiment-results.md)
+(multi-seed headline/baselines/identifiability),
+[`docs/superpowers/results/2026-07-15-architecture-ablation-results.md`](docs/superpowers/results/2026-07-15-architecture-ablation-results.md)
+and [`docs/superpowers/results/2026-07-15-multiseed-ablation-and-boucwen-results.md`](docs/superpowers/results/2026-07-15-multiseed-ablation-and-boucwen-results.md)
+(architecture ablation + Bouc-Wen),
+[`docs/superpowers/results/2026-07-15-leave-one-family-out-results.md`](docs/superpowers/results/2026-07-15-leave-one-family-out-results.md)
+and [`docs/superpowers/results/2026-07-16-leave-one-out-multiseed-results.md`](docs/superpowers/results/2026-07-16-leave-one-out-multiseed-results.md)
+(leave-one-family-out sweep).
 Design docs and implementation plans: `docs/superpowers/specs/`, `docs/superpowers/plans/`.
 
 ## License

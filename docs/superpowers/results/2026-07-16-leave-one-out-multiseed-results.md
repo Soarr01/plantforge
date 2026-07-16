@@ -102,14 +102,15 @@ doc's Reading notes for why ratio is misleading here):
 
 ## Disposition
 
-This is now a 5-seed-confirmed (4-seed for boucwen, with a documented and
-fixed reason) result, ready to fold into `paper/main.tex`'s "Family
-coverage and held-out-family choice" Limitations paragraph, replacing the
-current text ("we have not verified whether it is representative of the
-corpus's hardest held-out-family case or an outlier, and leave a full
-leave-one-family-out sweep to future work") with the actual finding: two
-families (backlash, drivetrain) are tied for hardest, the other three
-transfer better than in-distribution, confirmed at multi-seed scale. Not
-yet applied to the paper — pending discussion with the user on exact
-wording and whether/where else in the paper (e.g. Discussion) this should
-be mentioned.
+This is a 5-seed-confirmed (4-seed for boucwen, with a documented and
+fixed reason) result. **Applied to the paper**: `paper/main.tex`'s "Family
+coverage and held-out-family choice" Limitations paragraph now reports the
+finding directly (two families, `backlash` and `drivetrain`, tied for
+hardest; the other three each score below the trained-family-average
+reference when held out), with a new Table 4 (`tab:loo`). A follow-up
+4-way audit also caught that this finding recontextualizes the paper's
+headline "cross-family gap" claim (Section 4.1/Abstract), since that
+14--18$\times$ figure is specific to the `backlash` holdout rather than a
+general property of family transfer — the Abstract, Section 4.1,
+Limitations, the "negative and inconvenient results" paragraph, and the
+Conclusion were all updated to reconnect the claims consistently.
