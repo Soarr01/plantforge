@@ -10,6 +10,13 @@ for Papers and the official NeurIPS Paper Checklist guide (both fetched
 2026-07-16 — re-verify against whatever cycle you actually target, since
 these requirements change year to year).
 
+**Update 2026-07-16**: single-blind mode chosen — the paper now uses
+`\usepackage[preprint]{neurips_2024}` with real author info (Huynh Phuoc
+Thien Nguyen, National Central University) and the self-citation in
+`references.bib` links the real HuggingFace dataset URL. §1 item 5 and §2
+below are resolved; the rest of this checklist (items 8, 9, 11, 16, plus
+Croissant/page-limit) is still open.
+
 ## 0. Timeline reality check — read this first
 
 **The NeurIPS 2026 Evaluations & Datasets track deadline has already
@@ -48,7 +55,7 @@ of current state.
 | 2 | Limitations discussed? | Yes | Section 5 has 6 dedicated paragraphs: what the paper does/doesn't claim, real-plant validation scope, family coverage/held-out choice, architecture ablation scope, and negative/inconvenient results named explicitly. |
 | 3 | Theory assumptions/proofs complete? | N/A | No theoretical results — this is an empirical dataset+benchmark paper. |
 | 4 | Reproducibility steps for dataset/model? | Yes | Full corpus-generation code, exact family/excitation/rate definitions, fixed evaluation seeds (900-905) shared across all paired comparisons, checkpoint-resumable training with disclosed hyperparameters, 5-seed training-seed disclosure (0-4) for every headline number. |
-| 5 | Open access to code/data (or URL)? | **Needs a decision** — see §2 below | Public GitHub (`Soarr01/plantforge`) and HuggingFace (`stark4062/plantforge`) releases already exist; currently anonymized (link omitted) in the submitted PDF/bib for double-blind review. |
+| 5 | Open access to code/data (or URL)? | **Resolved: Yes** | Public GitHub (`Soarr01/plantforge`, MIT) and HuggingFace (`stark4062/plantforge`, CC BY 4.0) releases already exist; the paper's self-citation now links the real HuggingFace URL directly (single-blind, see §2). |
 | 6 | All training details specified (splits, hyperparameters, selection)? | Yes | Training-seed counts, evaluation-seed fixation, context/query window lengths (192/32), decimation factors per real dataset, ARX order-selection protocol (last-32-context one-step-ahead error), and all 4 ablation variants' exact width/layers are stated in-text. |
 | 7 | Error bars / statistical significance reported correctly? | Yes | Nearly every number is mean±std over 5 (4 for one flagged exception) independently-seeded runs; the paper explicitly discusses the limits of the ±1σ-overlap heuristic (not multiplicity-corrected) where it's used as a comparison bar. |
 | 8 | Compute resources disclosed per experiment? | **Currently No — needs a new paragraph, see §3 below** | Not yet stated anywhere in `main.tex`. |
@@ -65,25 +72,30 @@ Items 5, 8, 9, 11, 16 need your input before this section can be pasted into
 the paper — everything else has a defensible draft answer above grounded in
 what's actually in the repo.
 
-## 2. Item 5 in depth: the anonymity-vs-accessibility tension
+## 2. Item 5 in depth: the anonymity-vs-accessibility tension — RESOLVED
 
-The current paper anonymizes the dataset self-citation entirely (`link
-omitted for anonymous review`). The live NeurIPS 2026 Evaluations &
+**Decision (2026-07-16): single-blind.** The live NeurIPS 2026 Evaluations &
 Datasets CFP states data/code "must be available and accessible to all
 reviewers... without personal requests at submission time," and separately
 notes that D&B-style tracks often can't be reviewed fully double-blind, so
-**single-blind submission is an explicitly allowed option when full
-anonymization isn't practical.** Two real ways to resolve this for whatever
-cycle you target:
+single-blind submission is explicitly sanctioned for exactly this situation
+(a released dataset). Applied to `paper/main.tex` and `paper/references.bib`:
 
-- **Single-blind**: drop anonymization, use real author names/affiliation,
-  link the real GitHub/HuggingFace URLs directly. Simplest, and explicitly
-  sanctioned by the track for exactly this situation (a released dataset).
-- **Stay double-blind, but give reviewers real access**: host an anonymized
-  mirror (e.g. via `anonymous.4open.science` for the code, and a
-  freshly-created anonymous-named HuggingFace org for the data — not the
-  `stark4062` account) and link *that* instead of omitting the link
-  entirely. More work, keeps full anonymity through review.
+- `\usepackage{neurips_2024}` → `\usepackage[preprint]{neurips_2024}`
+  (real author names visible; footer reads "Preprint. Under review.",
+  distinct from the `final`/camera-ready option which would print an
+  accepted-venue notice instead).
+- Author block: real name (Huynh Phuoc Thien Nguyen), affiliation
+  (National Central University), email.
+- `references.bib`'s `plantforgedataset` self-citation: real author name,
+  direct link to `https://huggingface.co/datasets/stark4062/plantforge`
+  (previously `{{Anonymous}}` / "link omitted for anonymous review").
+- Recompiled clean (`pdflatex` + `bibtex` + 2x `pdflatex`, 12 pages, no
+  undefined refs), title page and reference-list entry visually verified.
+
+Not pursued: the double-blind-with-anonymized-mirror alternative
+(`anonymous.4open.science` + a fresh anonymous HF org) — single-blind was
+simpler and is explicitly allowed for this track/situation.
 
 Current state (link fully omitted, no anonymized mirror) satisfies neither
 cleanly — it's stricter than double-blind requires (no anonymized link at
