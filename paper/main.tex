@@ -558,12 +558,46 @@ not immune to high-variance cells, and that per-cell variance, not just the
 headline mean, is worth reporting when re-using these numbers.
 
 \paragraph{Family coverage and held-out-family choice.} We hold out a single
-family (\texttt{backlash}) throughout; we have not verified whether it is
-representative of the corpus's hardest held-out-family case or an outlier, and
-leave a full leave-one-family-out sweep to future work. The corpus's five
-families do not span every control nonlinearity of interest (no
+family (\texttt{backlash}) throughout Sections~\ref{sec:headline}--\ref{sec:identifiability}. We ran the full leave-one-family-out sweep flagged as future
+work in an earlier draft of this paper: training on each of the other four
+families as the sole held-out choice (5 seeds each, \texttt{corpus} recipe;
+4 seeds for \texttt{boucwen}, after one seed diverged to non-finite weights
+during training and was excluded). Table~\ref{tab:loo} shows the answer is
+more interesting than either "representative" or "outlier": the corpus's
+five families split into two clear difficulty tiers. \texttt{backlash} and
+\texttt{drivetrain} are statistically indistinguishable from each other at
+$\sim$0.29--0.30 held-out nMSE (their $\pm1\sigma$ bands overlap
+substantially), roughly 6--8$\times$ higher than the other three families
+at $\sim$0.035--0.047, which all transfer \emph{better} than
+in-distribution when held out. \texttt{drivetrain}'s difficulty here is
+consistent with it already being the hardest family for held-out-\emph{rate}
+transfer in Table~\ref{tab:headline} ($8.0\times$ at dt=0.05): its resonant
+two-inertia dynamics resist both axes of transfer, not just rate, while
+\texttt{backlash}'s discontinuous deadzone is the only other family that
+resists family-level holdout this strongly. The corpus's five
+families still do not span every control nonlinearity of interest (no
 multi-input/multi-output plants, no time-varying parameters within a
 trajectory).
+
+\begin{table}[h]
+  \caption{Leave-one-family-out sweep (mean$\pm$std, \texttt{corpus} recipe):
+  reference (mean nMSE over the 4 trained families) vs.\ held-out family
+  nMSE, both dt=0.05, ranked by held-out nMSE.}
+  \label{tab:loo}
+  \centering
+  \small
+  \begin{tabular}{lrrr}
+    \toprule
+    held-out family & reference nMSE & held-out nMSE & $n$ \\
+    \midrule
+    drivetrain & $0.0345\pm0.0006$ & $0.2976\pm0.0110$ & 5 \\
+    backlash & $0.0600\pm0.0037$ & $0.2899\pm0.0095$ & 5 \\
+    saturate & $0.0823\pm0.0029$ & $0.0474\pm0.0028$ & 5 \\
+    stribeck & $0.0833\pm0.0042$ & $0.0388\pm0.0036$ & 5 \\
+    boucwen & $0.0776\pm0.0041$ & $0.0351\pm0.0016$ & 4 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \paragraph{Architecture ablation: the family gap is capacity-invariant (5-seed check).}
 All headline results (Sections~\ref{sec:headline}--\ref{sec:identifiability}) use one
