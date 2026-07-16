@@ -116,10 +116,14 @@ all) while also not meeting the track's explicit accessibility requirement.
 Pick one of the two paths above once you know the target venue's exact
 policy for that cycle.
 
-## 3. Item 8 in depth: compute-resources paragraph (needs to be added)
+## 3. Item 8 in depth: compute-resources — DONE (2026-07-16, via the checklist itself)
 
-Real, measured numbers from this project you can use, rather than
-estimates:
+Resolved differently than originally planned: rather than a new main-text
+paragraph (which would have worsened the page-limit pressure in §4), the
+compute numbers below were written directly into the formal NeurIPS Paper
+Checklist's item 8 justification (`paper/main.tex`, excluded from the
+9-page main-text count) when that section was authored. Kept here for
+reference:
 
 - **Hardware**: single NVIDIA GeForce RTX 2080 Ti (11 GB), one GPU per
   training run — the model (1.58M params at default width/depth, up to
