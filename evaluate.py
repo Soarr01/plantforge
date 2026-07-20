@@ -54,8 +54,14 @@ class InContextSysID(nn.Module):
 
 
 def _norm(u, y):
-    """Per-series normalization — a METHOD choice, applied identically everywhere."""
-    return u / (u.std(1, keepdim=True) + 1e-6), y / (y.std(1, keepdim=True) + 1e-6)
+    """Per-series normalization using CONTEXT-ONLY statistics (first T_CTX
+    samples) -- avoids leaking query-horizon scale into the model's input.
+    The prior version computed std over the full sequence (context + query),
+    which let the model's context tokens carry information about the
+    query-horizon's own magnitude before that portion is ever revealed."""
+    u_ctx_std = u[:, :T_CTX].std(1, keepdim=True) + 1e-6
+    y_ctx_std = y[:, :T_CTX].std(1, keepdim=True) + 1e-6
+    return u / u_ctx_std, y / y_ctx_std
 
 
 def make_batch(family, exc, dt, B, seed):
