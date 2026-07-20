@@ -10,6 +10,7 @@ import torch
 from plantforge.families import ALL, FAMILIES, sample, simulate
 from plantforge.excitation import EXCITATIONS, generate, open_loop_input
 from plantforge.identifiability import identifiability
+from plantforge.corpus import gen_cell
 
 
 # ── Test 1: every family x excitation is finite and parameter-dependent ─────────────
@@ -113,6 +114,56 @@ def test_corpus_cell_roundtrip():
     print("  PASS  test_corpus_cell_roundtrip")
 
 
+def test_gen_cell_seeds_are_deterministic_across_hash_randomization():
+    """gen_cell's per-instance draws must not depend on Python's
+    per-process-randomized hash() -- two calls with the same explicit seed
+    must produce identical output regardless of hash seed randomization
+    (simulated here by calling gen_cell twice in the same process, which
+    would already differ under PYTHONHASHSEED=random if hash() were still
+    used, since hash('stribeck') is stable WITHIN one process but not
+    ACROSS processes -- the real regression this guards is a fixed,
+    order-stable index lookup, not process-level hash volatility, which a
+    single-process test can only partially exercise. The stronger
+    guarantee -- byte-identical shards from two separate `python -m
+    plantforge.corpus` invocations -- is verified operationally, not by
+    this unit test)."""
+    shard1 = gen_cell("stribeck", "multisine", 0.05, n_inst=16, seed=42, ident=False)
+    shard2 = gen_cell("stribeck", "multisine", 0.05, n_inst=16, seed=42, ident=False)
+    assert torch.equal(shard1["u"], shard2["u"]), \
+        "same explicit seed must give identical output within the same process"
+    assert torch.equal(shard1["theta"], shard2["theta"])
+    print("  PASS  test_gen_cell_seeds_are_deterministic_across_hash_randomization")
+
+
+def test_gen_cell_different_families_get_different_seeds():
+    """Two different families with the same seed/lo must NOT draw the same
+    parameter values (would happen if the family-index lookup collided).
+
+    Checked via `y`, not `u`: for "prbs" (open-loop) excitation, `u` is
+    plant-independent by construction (same property test_closedloop_is_closed
+    relies on), so it is identical across families regardless of whether the
+    family-index seed lookup collides -- comparing `u` here would never catch
+    a real collision. `y` depends on the family's dynamics/parameters even
+    when `u` is shared, so it is the field that actually exercises the
+    family-index lookup."""
+    shard_a = gen_cell("stribeck", "prbs", 0.05, n_inst=16, seed=0, ident=False)
+    shard_b = gen_cell("saturate", "prbs", 0.05, n_inst=16, seed=0, ident=False)
+    assert not torch.equal(shard_a["y"], shard_b["y"]), \
+        "different families must not produce identical trajectories"
+    print("  PASS  test_gen_cell_different_families_get_different_seeds")
+
+
+def test_gen_cell_returns_exactly_n_inst_even_with_divergence():
+    """gen_cell must always return exactly n_inst instances, even if some
+    draws diverge to non-finite values and must be retried."""
+    for fam in FAMILIES:
+        shard = gen_cell(fam, "closedloop", 0.05, n_inst=32, seed=0, ident=False)
+        assert shard["u"].shape[1] == 32, (fam, shard["u"].shape)
+        assert torch.isfinite(shard["u"]).all(), f"{fam}: non-finite u in returned shard"
+        assert torch.isfinite(shard["y"]).all(), f"{fam}: non-finite y in returned shard"
+    print("  PASS  test_gen_cell_returns_exactly_n_inst_even_with_divergence")
+
+
 def _run_all():
     test_families_finite_and_param_dependent()
     test_multirate_ground_truth_consistency()
@@ -120,6 +171,9 @@ def _run_all():
     test_closedloop_is_closed()
     test_identifiability_flags_unexcited_parameter()
     test_corpus_cell_roundtrip()
+    test_gen_cell_seeds_are_deterministic_across_hash_randomization()
+    test_gen_cell_different_families_get_different_seeds()
+    test_gen_cell_returns_exactly_n_inst_even_with_divergence()
 
 
 if __name__ == "__main__":

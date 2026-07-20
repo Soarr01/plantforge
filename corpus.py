@@ -27,25 +27,57 @@ RATES = [0.10, 0.05, 0.02]          # dt values: 10 / 20 / 50 Hz
 T_PHYS = 12.8                        # physical seconds per trajectory
 
 
+_FAMILY_IDX = {f: i for i, f in enumerate(FAMILIES)}
+_EXC_IDX = {e: i for i, e in enumerate(EXCITATIONS)}
+
+
 def gen_cell(family, exc, dt, n_inst, seed=0, ident=True, chunk=64):
     """One shard. Instances are drawn with a per-family seed so the SAME instances
-    appear across all (exc, rate) cells of that family."""
+    appear across all (exc, rate) cells of that family.
+
+    Uses a fixed FAMILIES/EXCITATIONS index lookup for seeding (not
+    hash(family)/hash(exc), which are randomized per Python process unless
+    PYTHONHASHSEED is pinned -- the prior version was not actually
+    deterministic across separate `python -m plantforge.corpus` runs).
+
+    Non-finite (diverged) draws are filtered out and the chunk is topped up
+    by re-drawing with a fresh seed, so gen_cell always returns exactly
+    n_inst instances with finite u/y -- matching the datasheet's documented
+    behavior (previously the datasheet's claim did not match this
+    function's actual, filter-less behavior)."""
     T = round(T_PHYS / dt)
     us, ys, thetas, crlbs, conds = [], [], [], [], []
     keys = None
-    for lo in range(0, n_inst, chunk):
-        B = min(chunk, n_inst - lo)
-        gen_p = torch.Generator().manual_seed(seed * 7919 + hash(family) % 10007 + lo)
-        p = sample(family, B, gen_p)
-        gen_u = torch.Generator().manual_seed(seed * 104729 + hash(exc) % 3571 + lo)
-        u, y = generate(family, p, exc, T, B, dt, gen_u)
-        us.append(u); ys.append(y)
-        from .families import param_vector
-        th, keys = param_vector(family, p)
-        thetas.append(th)
-        if ident:
-            idn = identifiability(family, p, u, dt)
-            crlbs.append(idn["rel_crlb"]); conds.append(idn["log10_cond"])
+    collected = 0
+    lo = 0
+    while collected < n_inst:
+        B = min(chunk, n_inst - collected)
+        attempt = 0
+        got = 0
+        while got < B:
+            attempt += 1
+            gen_p = torch.Generator().manual_seed(
+                seed * 7919 + _FAMILY_IDX[family] * 10007 + lo * 1000 + attempt)
+            p = sample(family, B - got, gen_p)
+            gen_u = torch.Generator().manual_seed(
+                seed * 104729 + _EXC_IDX[exc] * 3571 + lo * 1000 + attempt)
+            u, y = generate(family, p, exc, T, B - got, dt, gen_u)
+            finite = torch.isfinite(u).all(dim=0) & torch.isfinite(y).all(dim=0)
+            if not finite.all():
+                u, y = u[:, finite], y[:, finite]
+                p = {k: v[finite] for k, v in p.items()}
+            if u.shape[1] == 0:
+                continue   # whole sub-chunk diverged, retry with a fresh seed
+            us.append(u); ys.append(y)
+            from .families import param_vector
+            th, keys = param_vector(family, p)
+            thetas.append(th)
+            if ident:
+                idn = identifiability(family, p, u, dt)
+                crlbs.append(idn["rel_crlb"]); conds.append(idn["log10_cond"])
+            got += u.shape[1]
+        collected += B
+        lo += chunk
     shard = {"u": torch.cat(us, dim=1), "y": torch.cat(ys, dim=1),
              "theta": torch.cat(thetas), "keys": keys, "dt": dt,
              "family": family, "excitation": exc}
