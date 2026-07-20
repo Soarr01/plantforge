@@ -47,6 +47,7 @@ import torch
 from scipy.stats import spearmanr
 
 from .corpus import OUT
+from .identifiability import identifiability
 from .evaluate import _norm, T_CTX, D, DEV, CKPT_DIR
 from .families import FAMILIES
 from .excitation import EXCITATIONS
@@ -150,8 +151,25 @@ def main():
                 u = shard["u"].t()[:n_per_cell, :D].to(DEV)   # (B, D)
                 y = shard["y"].t()[:n_per_cell, :D].to(DEV)
                 v = _score_cell(models, u, y)
-                crlb = shard["rel_crlb"][:n_per_cell].max(dim=1).values.numpy()
-                cond = shard["log10_cond"][:n_per_cell].numpy()
+                # Recompute identifiability on the SAME 224-sample window the
+                # prediction task uses, rather than reusing the shard's
+                # full-trajectory annotation (128-640 samples depending on
+                # rate) -- the two must cover the same record length for the
+                # comparison to be meaningful. theta/keys in the shard fully
+                # capture the sampled p dict (param_vector's forward
+                # direction), so this reconstruction is exact and lossless.
+                theta_window = shard["theta"][:n_per_cell]           # (n_per_cell, K)
+                keys = shard["keys"]
+                p_window = {k: theta_window[:, i] for i, k in enumerate(keys)}
+                # identifiability() expects u as (T, B); shard["u"] is
+                # already stored (T_full, B_total) uncut, so slice directly
+                # without transposing -- this is a DIFFERENT slice of the
+                # same underlying tensor than the (B, D)-shaped `u` above,
+                # which is used for the model's forward pass.
+                u_for_ident = shard["u"][:D, :n_per_cell]            # (D, n_per_cell) = (T, B)
+                idn = identifiability(fam, p_window, u_for_ident, dt)
+                crlb = idn["rel_crlb"].max(dim=1).values.numpy()
+                cond = idn["log10_cond"].numpy()
                 # Query-horizon power, model-independent (no forward pass needed):
                 # same normalization qry_stats uses for `den`, computed once per cell.
                 with torch.no_grad():

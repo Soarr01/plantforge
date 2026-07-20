@@ -12,6 +12,8 @@ from plantforge.ident_exp import (qry_stats, nmse_per_instance, quartile_table,
                                    filter_low_power)
 from plantforge.evaluate import InContextSysID, D, DEV
 from plantforge.realbench import nmse_on_windows
+from plantforge.identifiability import identifiability
+from plantforge.families import sample, param_vector
 
 
 def test_qry_stats_reconstruct_batch_nmse():
@@ -71,11 +73,49 @@ def test_filter_low_power_drops_bottom_decile():
     print("  PASS  test_filter_low_power_drops_bottom_decile")
 
 
+def test_identifiability_recomputed_on_224_window_differs_from_full_trajectory():
+    """The identifiability annotation computed over a 224-sample window
+    must generally differ from one computed over a longer trajectory at
+    the same rate -- if they were identical, recomputing on the shorter
+    window would be pointless (the whole point of Group C's fix)."""
+    torch.manual_seed(0)
+    gen = torch.Generator().manual_seed(0)
+    p = sample("stribeck", 8, gen)
+    dt = 0.05
+    T_full = round(12.8 / dt)   # 256 samples, the full corpus trajectory length
+    u_full = torch.randn(T_full, 8)
+    u_224 = u_full[:224]
+
+    idn_full = identifiability("stribeck", p, u_full, dt)
+    idn_224 = identifiability("stribeck", p, u_224, dt)
+
+    assert not torch.allclose(idn_full["rel_crlb"], idn_224["rel_crlb"]), \
+        "224-sample and full-trajectory rel_crlb should generally differ " \
+        "(same excitation realization, different record length -> different FIM)"
+    print("  PASS  test_identifiability_recomputed_on_224_window_differs_from_full_trajectory")
+
+
+def test_theta_keys_roundtrip_reconstructs_p_dict():
+    """param_vector's forward direction (p -> theta, keys) must invert
+    losslessly: theta[:, i] alongside keys[i] must reconstruct exactly the
+    values sample() produced, in the same dict-key layout identifiability()
+    expects."""
+    gen = torch.Generator().manual_seed(1)
+    p = sample("boucwen", 5, gen)
+    theta, keys = param_vector("boucwen", p)
+    p_reconstructed = {k: theta[:, i] for i, k in enumerate(keys)}
+    for k in p:
+        assert torch.equal(p[k], p_reconstructed[k]), k
+    print("  PASS  test_theta_keys_roundtrip_reconstructs_p_dict")
+
+
 def _run_all():
     test_qry_stats_reconstruct_batch_nmse()
     test_quartile_table_monotone_construction()
     test_quartile_table_empty_bin_guard()
     test_filter_low_power_drops_bottom_decile()
+    test_identifiability_recomputed_on_224_window_differs_from_full_trajectory()
+    test_theta_keys_roundtrip_reconstructs_p_dict()
 
 
 if __name__ == "__main__":
