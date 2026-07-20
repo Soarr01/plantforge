@@ -8,7 +8,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 
 import torch
 
-from plantforge.evaluate import _norm, T_CTX
+from plantforge.evaluate import _norm, T_CTX, TRAIN_RATES
 
 
 def test_norm_uses_context_only_std():
@@ -52,9 +52,21 @@ def test_norm_context_std_is_approximately_one():
     print("  PASS  test_norm_context_std_is_approximately_one")
 
 
+def test_train_rates_excludes_the_old_reference_rate():
+    """Documents the bug this task fixes: 0.05 (the rate report() used to
+    call 'reference (train-like)' for corpus mode) is NOT a trained rate --
+    it's the held-out rate. TRAIN_RATES must be {0.10, 0.02} for the
+    report() fix (using TRAIN_RATES as the reference rates) to be correct."""
+    assert 0.05 not in TRAIN_RATES, \
+        "0.05 must stay the held-out rate for this fix to be meaningful"
+    assert set(TRAIN_RATES) == {0.10, 0.02}
+    print("  PASS  test_train_rates_excludes_the_old_reference_rate")
+
+
 def _run_all():
     test_norm_uses_context_only_std()
     test_norm_context_std_is_approximately_one()
+    test_train_rates_excludes_the_old_reference_rate()
 
 
 if __name__ == "__main__":

@@ -171,7 +171,16 @@ def run(mode: str, total_steps=10000, budget_s=500.0):
 
 def report(model, mode):
     print(f"\n=== {mode}: transfer matrix (in-context nMSE) ===")
-    ref = nmse(model, "wh" if mode == "wh_only" else "stribeck", "multisine", 0.05)
+    if mode == "wh_only":
+        # wh/multisine/dt=0.05 IS wh_only's only trained combination --
+        # already a valid in-distribution reference, unchanged.
+        ref = nmse(model, "wh", "multisine", 0.05)
+    else:
+        # stribeck/multisine/dt=0.05 is NOT in-distribution for corpus mode
+        # (dt=0.05 is the held-out rate -- TRAIN_RATES = [0.10, 0.02]).
+        # The correct in-distribution reference averages stribeck's nMSE
+        # over the two rates corpus mode actually trains on.
+        ref = sum(nmse(model, "stribeck", "multisine", dt) for dt in TRAIN_RATES) / len(TRAIN_RATES)
     print(f"  reference (train-like): {ref:.4f}")
     print(f"  held-out family {HOLD_FAMILY}:")
     for dt in (0.10, 0.05, 0.02):
