@@ -7,8 +7,9 @@ import sys, pathlib
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 
 import torch
+import torch.nn as nn
 
-from plantforge.evaluate import _norm, T_CTX, TRAIN_RATES
+from plantforge.evaluate import _norm, T_CTX, TRAIN_RATES, _has_finite_weights, InContextSysID
 
 
 def test_norm_uses_context_only_std():
@@ -63,10 +64,46 @@ def test_train_rates_excludes_the_old_reference_rate():
     print("  PASS  test_train_rates_excludes_the_old_reference_rate")
 
 
+def test_clip_grad_norm_returns_nonfinite_when_grads_are_nan():
+    """The guard in run() keys on clip_grad_norm_'s RETURN value (the total
+    grad norm before clipping) being non-finite. This documents/locks that
+    assumption: nan gradients -> non-finite returned norm."""
+    m = nn.Linear(4, 2)
+    for p in m.parameters():
+        p.grad = torch.full_like(p, float("nan"))
+    gnorm = nn.utils.clip_grad_norm_(m.parameters(), 1.0)
+    assert not torch.isfinite(gnorm), \
+        "clip_grad_norm_ must return a non-finite norm when grads contain nan"
+    # and the happy path stays finite
+    for p in m.parameters():
+        p.grad = torch.ones_like(p)
+    gnorm_ok = nn.utils.clip_grad_norm_(m.parameters(), 1.0)
+    assert torch.isfinite(gnorm_ok), \
+        "clip_grad_norm_ must return a finite norm for finite grads"
+    print("  PASS  test_clip_grad_norm_returns_nonfinite_when_grads_are_nan")
+
+
+def test_has_finite_weights_true_for_fresh_model():
+    m = InContextSysID()
+    assert _has_finite_weights(m) is True
+    print("  PASS  test_has_finite_weights_true_for_fresh_model")
+
+
+def test_has_finite_weights_false_when_a_parameter_is_nan():
+    m = InContextSysID()
+    with torch.no_grad():
+        next(m.parameters()).fill_(float("nan"))
+    assert _has_finite_weights(m) is False
+    print("  PASS  test_has_finite_weights_false_when_a_parameter_is_nan")
+
+
 def _run_all():
     test_norm_uses_context_only_std()
     test_norm_context_std_is_approximately_one()
     test_train_rates_excludes_the_old_reference_rate()
+    test_clip_grad_norm_returns_nonfinite_when_grads_are_nan()
+    test_has_finite_weights_true_for_fresh_model()
+    test_has_finite_weights_false_when_a_parameter_is_nan()
 
 
 if __name__ == "__main__":

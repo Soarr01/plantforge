@@ -64,6 +64,14 @@ def _norm(u, y):
     return u / u_ctx_std, y / y_ctx_std
 
 
+def _has_finite_weights(model) -> bool:
+    """True iff every learned parameter (not buffers -- the model's causal
+    mask buffer is legitimately -inf by design) is finite. Mirrors the
+    same-named helpers in ablation.py / leave_one_out.py, used here to refuse
+    to persist a diverged (all-NaN) checkpoint at train time."""
+    return all(torch.isfinite(p).all() for p in model.parameters())
+
+
 def make_batch(family, exc, dt, B, seed):
     gen = torch.Generator().manual_seed(seed)
     p = sample(family, B, gen)
@@ -156,11 +164,29 @@ def run(mode: str, total_steps=10000, budget_s=500.0):
             i += 1
             continue
         opt.zero_grad(); loss.backward()
-        nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        gnorm = nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+        if not torch.isfinite(gnorm):
+            # A rare batch can produce a finite forward loss but non-finite
+            # backward gradients under context-only normalization; clip_grad_norm_
+            # then returns a non-finite total norm and has already scaled every
+            # gradient by a non-finite clip coefficient. Skipping opt.step() here
+            # (the grads are cleared by the next opt.zero_grad()) prevents nan from
+            # being written into every weight -- the confirmed root cause of the
+            # 2026-07-21 all-NaN-checkpoint divergences. Bad batches are rare, so
+            # skipping them has negligible training impact.
+            print(f"  [{mode}] step {i}: non-finite gradient (norm={gnorm}), skipping step")
+            i += 1
+            continue
         opt.step()
         if i % 1000 == 0:
             print(f"  [{mode}] step {i:5d} mse {loss.item():.4f}")
         i += 1
+    if not _has_finite_weights(model):
+        raise RuntimeError(
+            f"[{mode}] refusing to save checkpoint at step {i}: model weights are "
+            f"non-finite (training diverged). This should be unreachable given the "
+            f"non-finite-gradient skip guard above; if it fires, a new divergence "
+            f"path exists and must be investigated, not silently persisted.")
     torch.save({"model": model.state_dict(), "opt": opt.state_dict(), "step": i}, ck_path)
     print(f"[{mode}] checkpoint at step {i}")
     if i < total_steps:
