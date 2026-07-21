@@ -51,9 +51,18 @@ def load_variant(ckpt_name: str):
     return model
 
 
+def _has_finite_weights(model) -> bool:
+    """True iff every learned parameter (not buffers -- the model's causal
+    mask buffer is legitimately -inf by design) is finite. A fully-NaN
+    checkpoint (training diverged and never recovered) still satisfies
+    step >= TOTAL_STEPS, so this is a separate check from "finished"."""
+    return all(torch.isfinite(p).all() for p in model.parameters())
+
+
 def _finished_variant_models(name: str, width: int, layers: int, seeds):
-    """Load every finished (step >= TOTAL_STEPS) checkpoint for this variant
-    across the given seeds; print a skip note for missing/unfinished ones."""
+    """Load every finished (step >= TOTAL_STEPS) checkpoint with finite
+    weights for this variant across the given seeds; print a skip note for
+    missing/unfinished/diverged ones."""
     models = []
     for seed in seeds:
         ckpt_name = _ckpt_name_for(width, layers, seed)
@@ -65,7 +74,11 @@ def _finished_variant_models(name: str, width: int, layers: int, seeds):
         if step < TOTAL_STEPS:
             print(f"    (seed {seed}: {ckpt_name} unfinished at step {step} -- skipped)")
             continue
-        models.append(load_variant(ckpt_name))
+        model = load_variant(ckpt_name)
+        if not _has_finite_weights(model):
+            print(f"    (seed {seed}: {ckpt_name} diverged to non-finite weights -- skipped)")
+            continue
+        models.append(model)
     return models
 
 
