@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import torch
 
-from .evaluate import InContextSysID, nmse, FAMILIES, CKPT_DIR, DEV
+from .evaluate import InContextSysID, nmse, FAMILIES, TRAIN_RATES, CKPT_DIR, DEV
 from .aggregate import mean_std_str
 
 HOLD_CHOICES = [f for f in FAMILIES if f != "backlash"]
@@ -44,10 +44,13 @@ def load_variant(ckpt_name: str):
 
 
 def reference_and_heldout(model, held_family: str):
-    """mean nMSE over the 4 trained (non-held) families, and nMSE on the
-    held-out family itself, both at dt=0.05, multisine."""
+    """mean nMSE over the 4 trained (non-held) families, averaged over the
+    actually-trained rates (TRAIN_RATES) so the reference is genuinely
+    in-distribution; and nMSE on the held-out family itself at dt=0.05 (the
+    held-out rate), matching how held-out family generalization is reported
+    elsewhere (evaluate.report())."""
     others = [f for f in FAMILIES if f != held_family]
-    ref_vals = [nmse(model, fam, "multisine", 0.05) for fam in others]
+    ref_vals = [nmse(model, fam, "multisine", dt) for fam in others for dt in TRAIN_RATES]
     reference = sum(ref_vals) / len(ref_vals)
     held_out = nmse(model, held_family, "multisine", 0.05)
     return reference, held_out
