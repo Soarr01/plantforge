@@ -13,7 +13,7 @@ import os
 
 import torch
 
-from .evaluate import InContextSysID, nmse, HOLD_FAMILY, CKPT_DIR, DEV
+from .evaluate import InContextSysID, nmse, HOLD_FAMILY, TRAIN_RATES, CKPT_DIR, DEV
 from .aggregate import mean_std_str
 
 VARIANTS = [
@@ -93,7 +93,8 @@ def main():
         if not models:
             print(f"    MISSING -- no finished seeds for this variant")
             continue
-        refs = [nmse(m, "stribeck", "multisine", 0.05) for m in models]
+        refs = [sum(nmse(m, "stribeck", "multisine", dt) for dt in TRAIN_RATES) / len(TRAIN_RATES)
+                for m in models]
         fams = [nmse(m, HOLD_FAMILY, "multisine", 0.05) for m in models]
         ref_mean = sum(refs) / len(refs)
         print(f"    reference: {mean_std_str(refs)}")

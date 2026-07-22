@@ -8,6 +8,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 
 import io
 import contextlib
+import os
 
 import torch
 
@@ -15,7 +16,7 @@ from plantforge.ablation import (
     VARIANTS, param_count, load_variant, _ckpt_name_for,
     _has_finite_weights, _finished_variant_models,
 )
-from plantforge.evaluate import InContextSysID
+from plantforge.evaluate import InContextSysID, TRAIN_RATES
 
 
 def test_variants_include_default_and_four_others():
@@ -86,6 +87,43 @@ def test_finished_variant_models_skips_diverged_checkpoint():
     print("  PASS  test_finished_variant_models_skips_diverged_checkpoint")
 
 
+def test_main_reference_averages_over_train_rates():
+    """The bug this task fixes: ablation.py's 'reference' used to be
+    nmse(m, 'stribeck', 'multisine', 0.05) -- dt=0.05 is a held-out rate.
+    main() must now average over TRAIN_RATES (0.10, 0.02) for the reference,
+    which changes the printed 'reference:' value and the 'x ref' ratio."""
+    import plantforge.ablation as abl
+    from plantforge.evaluate import TRAIN_RATES
+
+    calls = []
+
+    def fake_nmse(model, fam, exc, dt):
+        calls.append((fam, exc, dt))
+        return dt  # deterministic: returned value IS dt
+
+    def fake_finished_variant_models(name, width, layers, seeds):
+        return [object()] if name == "default" else []  # one fake "model" for default only
+
+    original_nmse = abl.nmse
+    original_finished = abl._finished_variant_models
+    abl.nmse = fake_nmse
+    abl._finished_variant_models = fake_finished_variant_models
+    try:
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            abl.main()
+    finally:
+        abl.nmse = original_nmse
+        abl._finished_variant_models = original_finished
+
+    ref_calls = [c for c in calls if c[0] == "stribeck" and c[1] == "multisine"
+                 and c[2] in TRAIN_RATES]
+    assert len(ref_calls) >= 2, f"expected reference calls at TRAIN_RATES, got {calls}"
+    assert not any(c[0] == "stribeck" and c[2] == 0.05 for c in calls), \
+        "reference must not be computed at the held-out rate 0.05"
+    print("  PASS  test_main_reference_averages_over_train_rates")
+
+
 def _run_all():
     test_variants_include_default_and_four_others()
     test_param_count_monotone_in_width_and_layers()
@@ -94,6 +132,7 @@ def _run_all():
     test_has_finite_weights_true_for_fresh_model()
     test_has_finite_weights_false_when_a_parameter_is_nan()
     test_finished_variant_models_skips_diverged_checkpoint()
+    test_main_reference_averages_over_train_rates()
 
 
 if __name__ == "__main__":
