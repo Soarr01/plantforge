@@ -9,9 +9,9 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2]))
 import math
 
 from plantforge.aggregate import (
-    transfer_cells, aggregate_matrices, mean_std_str,
+    transfer_cells, aggregate_matrices, mean_std_str, matrix,
 )
-from plantforge.evaluate import FAMILIES, HOLD_FAMILY
+from plantforge.evaluate import FAMILIES, HOLD_FAMILY, TRAIN_RATES
 
 
 def test_transfer_cells_structure():
@@ -55,11 +55,65 @@ def test_mean_std_str_format():
     print("  PASS  test_mean_std_str_format")
 
 
+def test_matrix_averages_reference_over_train_rates_for_corpus_mode():
+    """The bug this task fixes: corpus mode's 'reference (train-like)' cell
+    used to be nmse(model, 'stribeck', 'multisine', 0.05) -- dt=0.05 is a
+    held-out rate, not a trained one. matrix() must now average over
+    TRAIN_RATES (0.10, 0.02) instead, mirroring the evaluate.report() fix."""
+    import plantforge.aggregate as agg
+    calls = []
+
+    def fake_nmse(model, fam, exc, dt):
+        calls.append((fam, exc, dt))
+        return dt   # deterministic: returned value IS dt, so the mean is checkable
+
+    original = agg.nmse
+    agg.nmse = fake_nmse
+    try:
+        result = agg.matrix(None, "corpus")
+    finally:
+        agg.nmse = original
+
+    assert abs(result["reference (train-like)"] - 0.06) < 1e-9, \
+        f"expected mean of TRAIN_RATES (0.06), got {result['reference (train-like)']}"
+    ref_calls = [c for c in calls if c[0] == "stribeck" and c[1] == "multisine"
+                 and c[2] in TRAIN_RATES]
+    assert len(ref_calls) == 2, \
+        f"expected exactly 2 calls (one per TRAIN_RATES entry) for the reference cell, got {ref_calls}"
+    assert all(c[2] != 0.05 for c in ref_calls), "reference calls must not use the held-out rate 0.05"
+    print("  PASS  test_matrix_averages_reference_over_train_rates_for_corpus_mode")
+
+
+def test_matrix_wh_only_reference_unchanged_at_dt05():
+    """wh_only mode's reference (wh/multisine/dt=0.05) IS wh_only's only
+    trained combination -- it was already correct and must stay a single
+    dt=0.05 call, not an average."""
+    import plantforge.aggregate as agg
+    calls = []
+
+    def fake_nmse(model, fam, exc, dt):
+        calls.append((fam, exc, dt))
+        return 1.0
+
+    original = agg.nmse
+    agg.nmse = fake_nmse
+    try:
+        result = agg.matrix(None, "wh_only")
+    finally:
+        agg.nmse = original
+
+    assert result["reference (train-like)"] == 1.0
+    assert calls[0] == ("wh", "multisine", 0.05)
+    print("  PASS  test_matrix_wh_only_reference_unchanged_at_dt05")
+
+
 def _run_all():
     test_transfer_cells_structure()
     test_aggregate_matrices_mean_std_n()
     test_aggregate_matrices_single_seed_no_nan_std()
     test_mean_std_str_format()
+    test_matrix_averages_reference_over_train_rates_for_corpus_mode()
+    test_matrix_wh_only_reference_unchanged_at_dt05()
 
 
 if __name__ == "__main__":

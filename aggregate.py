@@ -11,7 +11,7 @@ import os
 
 import torch
 
-from .evaluate import (FAMILIES, HOLD_FAMILY, CKPT_DIR, nmse)
+from .evaluate import (FAMILIES, HOLD_FAMILY, TRAIN_RATES, CKPT_DIR, nmse)
 from .realbench import load_model, nmse_on_windows
 
 TOTAL_STEPS = 10000
@@ -33,8 +33,18 @@ def transfer_cells(mode: str):
 
 
 def matrix(model, mode: str) -> dict:
-    return {label: nmse(model, fam, exc, dt)
-            for label, fam, exc, dt in transfer_cells(mode)}
+    out = {}
+    for label, fam, exc, dt in transfer_cells(mode):
+        if label == "reference (train-like)" and mode != "wh_only":
+            # dt=0.05 is a held-out rate (TRAIN_RATES = [0.10, 0.02]) --
+            # average over the actually-trained rates instead, mirroring the
+            # fix in evaluate.report() (2026-07-20 adversarial-review-fixes,
+            # Finding 1). wh_only mode is unaffected: dt=0.05 IS wh_only's
+            # only trained rate, so it was already a valid reference.
+            out[label] = sum(nmse(model, fam, exc, r) for r in TRAIN_RATES) / len(TRAIN_RATES)
+        else:
+            out[label] = nmse(model, fam, exc, dt)
+    return out
 
 
 def aggregate_matrices(mats: list) -> dict:
