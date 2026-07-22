@@ -1,0 +1,11 @@
+=== classical baselines on the corpus transfer cells (context-fit + free-run, nMSE) ===
+  reference (train-like): ARX 0.0083 | NARX2 75467519266.6223
+  held-out family backlash dt=0.10: ARX 0.3106 | NARX2 29240383739.4515
+  held-out family backlash dt=0.05: ARX 0.3397 | NARX2 91688866306.8568
+  held-out family backlash dt=0.02: ARX 0.7514 | NARX2 47298382330.4704
+  held-out excitation chirp (stribeck, dt=0.05): ARX 0.0038 | NARX2 467284176354.1492
+  held-out excitation closedloop (stribeck, dt=0.05): ARX 0.0058 | NARX2 21266498981.3409
+  held-out rate dt=0.05 stribeck: ARX 0.0083 | NARX2 75467519266.6223
+  held-out rate dt=0.05 saturate: ARX 1303917811.1270 | NARX2 65951091549.2754
+  held-out rate dt=0.05 boucwen: ARX 0.0314 | NARX2 67201189767.3810
+  held-out rate dt=0.05 drivetrain: ARX 0.0254 | NARX2 45437980699.4533

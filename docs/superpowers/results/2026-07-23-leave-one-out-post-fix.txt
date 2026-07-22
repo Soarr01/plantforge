@@ -1,0 +1,16 @@
+=== leave-one-family-out sweep: corpus recipe, reference = mean nMSE over 4 trained families ===
+  backlash (existing baseline):
+    reference: 0.0484 ± 0.0029 (n=5)
+    held_out:  0.3448 ± 0.0161 (n=5)  (7.1x ref)
+  stribeck:
+    reference: 0.1207 ± 0.0114 (n=5)
+    held_out:  0.0423 ± 0.0023 (n=5)  (0.4x ref)
+  saturate:
+    reference: 0.1175 ± 0.0046 (n=5)
+    held_out:  0.0599 ± 0.0064 (n=5)  (0.5x ref)
+  boucwen:
+    reference: 0.1155 ± 0.0035 (n=5)
+    held_out:  0.0452 ± 0.0037 (n=5)  (0.4x ref)
+  drivetrain:
+    reference: 0.0790 ± 0.0049 (n=5)
+    held_out:  0.3277 ± 0.0247 (n=5)  (4.1x ref)

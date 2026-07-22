@@ -1,0 +1,16 @@
+=== architecture ablation: corpus recipe, seeds [0, 1, 2, 3, 4], 2 target cells ===
+  default (d=160 L=5 params=1,582,881):
+    reference: 0.0192 ± 0.0007 (n=5)
+    family_backlash_dt.05: 0.3448 ± 0.0161 (n=5)  (17.9x ref)
+  narrow (d=80 L=5 params=407,441):
+    reference: 0.0300 ± 0.0028 (n=5)
+    family_backlash_dt.05: 0.3708 ± 0.0108 (n=5)  (12.4x ref)
+  wide (d=320 L=5 params=6,237,761):
+    reference: 0.0170 ± 0.0016 (n=5)
+    family_backlash_dt.05: 0.3261 ± 0.0172 (n=5)  (19.1x ref)
+  shallow (d=160 L=2 params=655,041):
+    reference: 0.0419 ± 0.0029 (n=5)
+    family_backlash_dt.05: 0.3419 ± 0.0094 (n=5)  (8.2x ref)
+  deep (d=160 L=8 params=2,510,721):
+    reference: 0.0155 ± 0.0011 (n=5)
+    family_backlash_dt.05: 0.3528 ± 0.0088 (n=5)  (22.8x ref)

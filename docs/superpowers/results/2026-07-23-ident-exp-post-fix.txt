@@ -1,0 +1,59 @@
+=== identifiability vs in-context difficulty (corpus model, 5 seed(s), 1000/cell) ===
+  instances scored: 40000 (dropped 0 non-finite)
+  PRIMARY -- within-cell Spearman(max rel-CRLB, nMSE), aggregated over cells:
+    median r = -0.112  mean r = -0.093  (cells: 40, positive r: 10/40, p<0.05 & r>0: 5/40 (descriptive; no multiplicity correction -- ~2/40 expected by chance))
+    power-controlled: median r = -0.113  mean r = -0.102  (excl. bottom-decile den per cell)
+    range-filtered: median r = -0.112  (cells with rel-CRLB IQR > 1e-6: 40/40)
+      stribeck     prbs         dt=0.05  r=-0.152 (p=1.3e-06, n=1000)  r_pow=-0.137 (p=3.6e-05, n=900)  IQR=18.3
+      stribeck     prbs         dt=0.02  r=-0.082 (p=9.2e-03, n=1000)  r_pow=-0.090 (p=7.2e-03, n=900)  IQR=19.1
+      stribeck     multisine    dt=0.05  r=-0.292 (p=3.9e-21, n=1000)  r_pow=-0.299 (p=5.4e-20, n=900)  IQR=49.6
+      stribeck     multisine    dt=0.02  r=-0.247 (p=2.5e-15, n=1000)  r_pow=-0.273 (p=7.5e-17, n=900)  IQR=62.6
+      stribeck     chirp        dt=0.05  r=-0.011 (p=7.2e-01, n=1000)  r_pow=-0.005 (p=8.7e-01, n=900)  IQR=32.6
+      stribeck     chirp        dt=0.02  r=-0.217 (p=4.3e-12, n=1000)  r_pow=-0.200 (p=1.3e-09, n=900)  IQR=40.5
+      stribeck     closedloop   dt=0.05  r=-0.179 (p=1.2e-08, n=1000)  r_pow=-0.222 (p=1.7e-11, n=900)  IQR=80.3
+      stribeck     closedloop   dt=0.02  r=-0.110 (p=5.0e-04, n=1000)  r_pow=-0.107 (p=1.2e-03, n=900)  IQR=102
+      backlash     prbs         dt=0.05  r=-0.335 (p=1.4e-27, n=1000)  r_pow=-0.352 (p=1.1e-27, n=900)  IQR=1.83
+      backlash     prbs         dt=0.02  r=-0.312 (p=4.9e-24, n=1000)  r_pow=-0.300 (p=3.9e-20, n=900)  IQR=1.9
+      backlash     multisine    dt=0.05  r=+0.170 (p=6.9e-08, n=1000)  r_pow=+0.109 (p=1.1e-03, n=900)  IQR=3.79
+      backlash     multisine    dt=0.02  r=+0.198 (p=2.7e-10, n=1000)  r_pow=+0.150 (p=6.5e-06, n=900)  IQR=4.3
+      backlash     chirp        dt=0.05  r=-0.152 (p=1.5e-06, n=1000)  r_pow=-0.147 (p=8.9e-06, n=900)  IQR=2.2
+      backlash     chirp        dt=0.02  r=-0.106 (p=8.0e-04, n=1000)  r_pow=-0.053 (p=1.1e-01, n=900)  IQR=2.48
+      backlash     closedloop   dt=0.05  r=+0.331 (p=6.1e-27, n=1000)  r_pow=+0.242 (p=1.8e-13, n=900)  IQR=5.25
+      backlash     closedloop   dt=0.02  r=+0.340 (p=1.7e-28, n=1000)  r_pow=+0.231 (p=2.1e-12, n=900)  IQR=5.62
+      saturate     prbs         dt=0.05  r=-0.252 (p=5.6e-16, n=1000)  r_pow=-0.253 (p=1.2e-14, n=900)  IQR=1.4
+      saturate     prbs         dt=0.02  r=-0.242 (p=8.1e-15, n=1000)  r_pow=-0.259 (p=3.0e-15, n=900)  IQR=1.53
+      saturate     multisine    dt=0.05  r=-0.216 (p=4.7e-12, n=1000)  r_pow=-0.226 (p=6.8e-12, n=900)  IQR=3.35
+      saturate     multisine    dt=0.02  r=-0.138 (p=1.3e-05, n=1000)  r_pow=-0.148 (p=8.4e-06, n=900)  IQR=3.66
+      saturate     chirp        dt=0.05  r=-0.246 (p=3.1e-15, n=1000)  r_pow=-0.260 (p=2.0e-15, n=900)  IQR=2.03
+      saturate     chirp        dt=0.02  r=-0.044 (p=1.7e-01, n=1000)  r_pow=-0.003 (p=9.2e-01, n=900)  IQR=2.9
+      saturate     closedloop   dt=0.05  r=-0.257 (p=1.6e-16, n=1000)  r_pow=-0.273 (p=7.5e-17, n=900)  IQR=4.16
+      saturate     closedloop   dt=0.02  r=-0.149 (p=2.1e-06, n=1000)  r_pow=-0.175 (p=1.3e-07, n=900)  IQR=4.4
+      boucwen      prbs         dt=0.05  r=-0.190 (p=1.5e-09, n=1000)  r_pow=-0.168 (p=4.3e-07, n=900)  IQR=0.558
+      boucwen      prbs         dt=0.02  r=-0.115 (p=2.6e-04, n=1000)  r_pow=-0.175 (p=1.4e-07, n=900)  IQR=0.477
+      boucwen      multisine    dt=0.05  r=-0.091 (p=3.8e-03, n=1000)  r_pow=-0.106 (p=1.4e-03, n=900)  IQR=0.937
+      boucwen      multisine    dt=0.02  r=-0.086 (p=6.3e-03, n=1000)  r_pow=-0.093 (p=5.1e-03, n=900)  IQR=0.951
+      boucwen      chirp        dt=0.05  r=-0.114 (p=3.2e-04, n=1000)  r_pow=-0.112 (p=8.0e-04, n=900)  IQR=0.765
+      boucwen      chirp        dt=0.02  r=-0.028 (p=3.7e-01, n=1000)  r_pow=+0.023 (p=5.0e-01, n=900)  IQR=1.08
+      boucwen      closedloop   dt=0.05  r=-0.248 (p=1.7e-15, n=1000)  r_pow=-0.270 (p=1.8e-16, n=900)  IQR=1.58
+      boucwen      closedloop   dt=0.02  r=-0.090 (p=4.3e-03, n=1000)  r_pow=-0.114 (p=6.3e-04, n=900)  IQR=1.74
+      drivetrain   prbs         dt=0.05  r=+0.095 (p=2.8e-03, n=1000)  r_pow=+0.122 (p=2.4e-04, n=900)  IQR=0.479
+      drivetrain   prbs         dt=0.02  r=+0.014 (p=6.6e-01, n=1000)  r_pow=+0.027 (p=4.2e-01, n=900)  IQR=0.897
+      drivetrain   multisine    dt=0.05  r=+0.027 (p=4.0e-01, n=1000)  r_pow=+0.055 (p=9.7e-02, n=900)  IQR=1.81
+      drivetrain   multisine    dt=0.02  r=+0.031 (p=3.3e-01, n=1000)  r_pow=+0.044 (p=1.8e-01, n=900)  IQR=2.68
+      drivetrain   chirp        dt=0.05  r=-0.222 (p=1.2e-12, n=1000)  r_pow=-0.246 (p=6.7e-14, n=900)  IQR=0.977
+      drivetrain   chirp        dt=0.02  r=+0.011 (p=7.2e-01, n=1000)  r_pow=+0.006 (p=8.6e-01, n=900)  IQR=2.43
+      drivetrain   closedloop   dt=0.05  r=+0.001 (p=9.7e-01, n=1000)  r_pow=+0.002 (p=9.4e-01, n=900)  IQR=2.18
+      drivetrain   closedloop   dt=0.02  r=-0.018 (p=5.7e-01, n=1000)  r_pow=-0.008 (p=8.2e-01, n=900)  IQR=3.45
+  SECONDARY (pooled across cells -- confounded by between-cell structure; see within-cell above):
+    Spearman(max rel-CRLB, nMSE): r=-0.082 (p=2.7e-61)
+    Spearman(log10 FIM cond, nMSE): r=-0.318 (p=0.0e+00)
+      stribeck: r=-0.126 (p=1.5e-29, n=8000)
+      backlash: r=0.320 (p=2.1e-190, n=8000)
+      saturate: r=-0.136 (p=3.0e-34, n=8000)
+      boucwen: r=0.006 (p=5.8e-01, n=8000)
+      drivetrain: r=-0.159 (p=1.0e-46, n=8000)
+  quartiles of max rel-CRLB -> nMSE (mean is heavy-tail-dominated; median is the defensible summary):
+    Q1: metric~0.412  mean nMSE=2.4397  median nMSE=0.0345  (n=10000)
+    Q2: metric~1.17  mean nMSE=11425202.0000  median nMSE=0.0396  (n=10000)
+    Q3: metric~3.24  mean nMSE=317037280.0000  median nMSE=0.0430  (n=10000)
+    Q4: metric~250  mean nMSE=931860480.0000  median nMSE=0.0207  (n=10000)

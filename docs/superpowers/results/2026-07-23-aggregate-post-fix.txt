@@ -1,0 +1,30 @@
+
+=== wh_only: transfer matrix, mean ± std over seeds ===
+  reference (train-like): 0.0034 ± 0.0001 (n=5)  [1.0x ref]
+  held-out family backlash dt=0.10: 0.3800 ± 0.0081 (n=5)  [111.6x ref]
+  held-out family backlash dt=0.05: 0.3883 ± 0.0085 (n=5)  [114.0x ref]
+  held-out family backlash dt=0.02: 0.6112 ± 0.0065 (n=5)  [179.4x ref]
+  held-out excitation chirp (stribeck, dt=0.05): 0.1417 ± 0.0393 (n=5)  [41.6x ref]
+  held-out excitation closedloop (stribeck, dt=0.05): 0.0636 ± 0.0162 (n=5)  [18.7x ref]
+  held-out rate dt=0.05 stribeck: 0.0300 ± 0.0012 (n=5)  [8.8x ref]
+  held-out rate dt=0.05 saturate: 0.0140 ± 0.0005 (n=5)  [4.1x ref]
+  held-out rate dt=0.05 boucwen: 0.0869 ± 0.0068 (n=5)  [25.5x ref]
+  held-out rate dt=0.05 drivetrain: 0.2036 ± 0.0022 (n=5)  [59.8x ref]
+  real-plant Silverbox (decimated 12x -> dt=0.0197s): 0.7941 ± 0.2098 (n=5)
+  real-plant Cascaded_Tanks (native dt=4.00s, extrapolation): 0.3653 ± 0.1564 (n=5)
+  real-plant Bouc-Wen (decimated 15x -> dt=0.0200s): 1.9684 ± 0.4163 (n=5)
+
+=== corpus: transfer matrix, mean ± std over seeds ===
+  reference (train-like): 0.0192 ± 0.0007 (n=5)  [1.0x ref]
+  held-out family backlash dt=0.10: 0.3205 ± 0.0147 (n=5)  [16.7x ref]
+  held-out family backlash dt=0.05: 0.3448 ± 0.0161 (n=5)  [17.9x ref]
+  held-out family backlash dt=0.02: 0.5988 ± 0.0155 (n=5)  [31.1x ref]
+  held-out excitation chirp (stribeck, dt=0.05): 0.0355 ± 0.0129 (n=5)  [1.8x ref]
+  held-out excitation closedloop (stribeck, dt=0.05): 0.0273 ± 0.0112 (n=5)  [1.4x ref]
+  held-out rate dt=0.05 stribeck: 0.0210 ± 0.0017 (n=5)  [1.1x ref]
+  held-out rate dt=0.05 saturate: 0.0287 ± 0.0029 (n=5)  [1.5x ref]
+  held-out rate dt=0.05 boucwen: 0.0186 ± 0.0015 (n=5)  [1.0x ref]
+  held-out rate dt=0.05 drivetrain: 0.1691 ± 0.0108 (n=5)  [8.8x ref]
+  real-plant Silverbox (decimated 12x -> dt=0.0197s): 0.4863 ± 0.0937 (n=5)
+  real-plant Cascaded_Tanks (native dt=4.00s, extrapolation): 0.0415 ± 0.0121 (n=5)
+  real-plant Bouc-Wen (decimated 15x -> dt=0.0200s): 1.3497 ± 0.1756 (n=5)
