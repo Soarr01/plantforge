@@ -8,35 +8,45 @@ verifications, both NARROWED to exactly this design); gate PASSED same day.
 
 All numbers below are from **5 independently-seeded training runs per model**
 (`PF_SEED=0..4`, 10k steps each), mean±std, reproduced end-to-end on this
-repository's own corpus and checkpoints. Full captured output and reading
-notes: [`docs/superpowers/results/2026-07-14-experiment-results.md`](docs/superpowers/results/2026-07-14-experiment-results.md).
+repository's own corpus and checkpoints, retrained under a training loop that
+guards against a rare non-finite-gradient divergence found and fixed
+2026-07-23 (see commit history). `corpus`-trained models train on fresh
+batches drawn from the generator distribution, not on the static released
+shards below — those are a separate, versioned snapshot for reproducibility
+and identifiability-annotation reference. Full captured output and reading
+notes: [`docs/superpowers/results/2026-07-14-experiment-results.md`](docs/superpowers/results/2026-07-14-experiment-results.md)
+(original run) and the `2026-07-23-*-post-fix.txt` files under
+[`docs/superpowers/results/`](docs/superpowers/results/) (current numbers, below).
 
 ## The two headline experiments (both run, both reproducible, both multi-seed)
 
 **1. The failure**: an in-context SysID transformer trained on
-Wiener-Hammerstein-only white-noise data — the private-generator recipe the
+Wiener-Hammerstein-only multisine data — the private-generator recipe the
 forgi86 lineage regenerates every paper — collapses off its training
-distribution (in-family nMSE 0.0040±0.0004): cross-family → backlash
-**93–118×**, cross-rate/excitation degradation throughout.
+distribution (in-family nMSE 0.0034±0.0001): cross-family → backlash
+**112–179×**, cross-rate/excitation degradation throughout.
 
 **2. The fix — and its honest limit** (`evaluate corpus`, 10k steps, trained on 4-of-5
 families × {multisine, prbs} × {10, 50 Hz}):
 
 | held-out axis | wh_only nMSE (×ref) | corpus nMSE (×ref) |
 |---|---|---|
-| family backlash, dt=0.05 (never seen) | 0.3678±0.0408 (92.6×) | **0.2899±0.0095 (13.5×)** |
-| rate dt=0.05, stribeck (interpolated) | 0.0341±0.0039 (8.6×) | **0.0215±0.0017 (1.0×)** |
-| rate dt=0.05, saturate | 0.0141±0.0016 (3.5×) | 0.0285±0.0021 (1.3×) — **only cell where wh_only wins** |
-| excitation chirp (stribeck, dt=0.05) | 0.1533±0.0645 (38.6×) | **0.0383±0.0143 (1.8×)** |
-| excitation closedloop (stribeck, dt=0.05) | 0.0545±0.0056 (13.7×) | **0.0195±0.0031 (0.9×)** |
+| family backlash, dt=0.05 (never seen) | 0.3883±0.0085 (114.0×) | **0.3448±0.0161 (17.9×)** |
+| rate dt=0.05, stribeck (interpolated) | 0.0300±0.0012 (8.8×) | **0.0210±0.0017 (1.1×)** |
+| rate dt=0.05, saturate | 0.0140±0.0005 (4.1×) | 0.0287±0.0029 (1.5×) — **only cell where wh_only wins** |
+| excitation chirp (stribeck, dt=0.05) | 0.1417±0.0393 (41.6×) | **0.0355±0.0129 (1.8×)** |
+| excitation closedloop (stribeck, dt=0.05) | 0.0636±0.0162 (18.7×) | **0.0273±0.0112 (1.4×)** |
 
 Multi-axis training data **solves the rate and excitation axes for most families**
-(the WH-model's 8–39× degradation collapses to ~1–2×) and **halves but does not
-close** the cross-family gap (93× → 14×, still an order of magnitude off
-reference). Held-out-family is therefore shipped as the corpus's open challenge
-track, not claimed solved. The `saturate` rate-interpolation cell is the one
-place `wh_only` beats `corpus` — reported rather than smoothed over; "corpus
-training helps" is not a universal law across every cell.
+(the WH-model's 4–42× degradation collapses to ~1–2×) and **substantially
+narrows, but does not close** the cross-family gap (~6× reduction in the
+degradation ratio, 112–179× → 17–31×, still an order of magnitude off
+reference; only an 11% reduction in absolute nMSE at dt=0.05 — the ratio and
+absolute framings tell different-sized stories). Held-out-family is therefore
+shipped as the corpus's open challenge track, not claimed solved. The
+`saturate` rate-interpolation cell is the one place `wh_only` beats `corpus`
+— reported rather than smoothed over; "corpus training helps" is not a
+universal law across every cell.
 
 ![Synthetic transfer matrix, wh_only vs corpus, 5-seed mean±std](figures/fig1_transfer_matrix.png)
 
@@ -48,9 +58,9 @@ Both checkpoints, trained only on synthetic corpus data, evaluated **zero-shot**
 
 | dataset | rate handling | wh_only nMSE | corpus nMSE |
 |---|---|---|---|
-| Silverbox | decimated 12× → dt≈0.0197s (~50Hz-like) | 0.958±0.217 | **0.331±0.040** |
-| Cascaded_Tanks | native dt=4.0s — 40× coarser than trained range, **extrapolation** | 0.394±0.081 | **0.084±0.043** |
-| Bouc-Wen | decimated 15× → dt=0.0200s, fetched directly from 4TU.ResearchData (not exposed by `nonlinear_benchmarks`'s pip package) | 2.537±0.848 | **1.589±0.361** |
+| Silverbox | decimated 12× → dt≈0.0197s (~50Hz-like) | 0.7941±0.2098 | **0.4863±0.0937** |
+| Cascaded_Tanks | native dt=4.0s — 40× coarser than trained range, **extrapolation** | 0.3653±0.1564 | **0.0415±0.0121** |
+| Bouc-Wen | decimated 15× → dt=0.0200s, fetched directly from 4TU.ResearchData (not exposed by `nonlinear_benchmarks`'s pip package) | 1.9684±0.4163 | **1.3497±0.1756** |
 | WienerHammerBenchMark | **not evaluable** — total record duration (~1.5s) is shorter than one context window at any trained rate (min 4.48s) | — | — |
 
 ## Classical baselines temper the transformer story (`baselines.py`)
@@ -61,9 +71,9 @@ on the 32-sample query, under the *exact same protocol* as the transformer
 is a genuinely strong baseline, not a strawman:
 
 - Beats **both** trained transformers on held-out excitation (chirp,
-  closedloop), held-out rate `drivetrain`, and — most strikingly — **both
-  real-plant benchmarks**: Silverbox 0.0028 (vs 0.33 / 0.96), Cascaded_Tanks
-  0.0075 (vs 0.08 / 0.39).
+  closedloop), held-out rate `drivetrain`, and — most strikingly — **all
+  three real-plant benchmarks**: Silverbox 0.0028 (vs 0.49 / 0.79),
+  Cascaded_Tanks 0.0073 (vs 0.04 / 0.37), Bouc-Wen 0.0616 (vs 1.35 / 1.97).
 - This is not an unfair comparison: ARX re-fits per window (same adaptive
   privilege the in-context transformer is designed to have), and it wins
   specifically on rate-shifted/extrapolated cells partly *because* a
@@ -85,8 +95,8 @@ family×excitation×rate cell, then aggregated — pooling across cells first is
 confounded by between-cell structure, verified via two independent confound
 controls: query-power decile filtering and annotation-range filtering):
 
-**Result: weak, robustly negative** — median within-cell r = **−0.122**
-(base) / −0.117 (power-controlled) / −0.122 (range-filtered), 5 training
+**Result: weak, robustly negative** — median within-cell r = **−0.112**
+(base) / −0.113 (power-controlled) / −0.112 (range-filtered), 5 training
 seeds × 40 cells, only 10/40 cells positive. Reframe: prediction difficulty
 decouples from parameter-*recovery* difficulty — a parameter that is hard to
 identify (rel-CRLB) is typically one with little influence on the output, so
@@ -210,7 +220,16 @@ rate (20 Hz), held-out excitations (chirp, closedloop).
 | `scripts/train_leave_one_out.sh`, `scripts/train_leave_one_out_seeds.sh` | resumable training drivers for the leave-one-family-out sweep (seed 0, then seeds 1-4) |
 | `figures/make_figures.py` | regenerates all paper figures from the reviewed result numbers |
 
-Full experiment results and reading notes:
+**Current numbers** (2026-07-23, post training-divergence-guard fix and
+reference-rate fix, all 50 checkpoints retrained and clean): raw captured
+output for every script is under
+[`docs/superpowers/results/`](docs/superpowers/results/) as
+`2026-07-23-{aggregate,ablation,leave-one-out,baselines,ident-exp}-post-fix.txt`;
+the investigation that led to the fix is documented in
+[`docs/superpowers/results/2026-07-21-normalization-divergence-investigation.md`](docs/superpowers/results/2026-07-21-normalization-divergence-investigation.md).
+
+Earlier experiment results and reading notes (superseded by the above, kept
+for history):
 [`docs/superpowers/results/2026-07-14-experiment-results.md`](docs/superpowers/results/2026-07-14-experiment-results.md)
 (multi-seed headline/baselines/identifiability),
 [`docs/superpowers/results/2026-07-15-architecture-ablation-results.md`](docs/superpowers/results/2026-07-15-architecture-ablation-results.md)

@@ -10,7 +10,7 @@ No existing dynamics/system-identification corpus jointly varies
 **nonlinearity family × excitation class × sampling rate**, and none ships
 per-instance identifiability annotations. The incumbent recipe in the
 in-context SysID literature (the "forgi86 lineage") privately regenerates
-Wiener-Hammerstein-only white-noise data per paper. PLANTFORGE was created
+Wiener-Hammerstein-only multisine (or similarly narrowband) data per paper. PLANTFORGE was created
 to (1) make that training distribution's narrowness measurable — a model
 trained WH-only collapses off-distribution (see `README.md`) — and (2)
 provide a released, static, reproducible corpus broad enough to fix it.
@@ -119,7 +119,13 @@ splits (`evaluate.py`); (2) zero-shot transfer to real measured plants
 (`realbench.py`); (3) classical baseline comparison (`baselines.py`);
 (4) testing whether identifiability annotations predict in-context
 prediction difficulty (`ident_exp.py` — result: they largely do not; see
-`docs/superpowers/results/2026-07-14-experiment-results.md`).
+`docs/superpowers/results/2026-07-14-experiment-results.md`). Note on (1):
+`evaluate.py`'s training loop draws fresh batches directly from the
+procedural generator distribution (`families.py`/`excitation.py`) on every
+step, never reading from this dataset's released static shards — the
+released corpus is a separate, versioned snapshot used for reproducibility
+and as the source data for (4)'s identifiability annotations, not the
+transformer's literal training set.
 
 **What (other) tasks could the dataset be used for?**
 Parameter-recovery / classical system identification benchmarking; transfer

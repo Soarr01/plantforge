@@ -33,27 +33,31 @@
 \begin{abstract}
 In-context system-identification (SysID) transformers are typically trained on a
 single private data-generation recipe --- most commonly Wiener-Hammerstein-only
-white-noise data, regenerated independently by every paper in this line of work.
-We introduce PLANTFORGE, a released, static, reproducible corpus of synthetic
-control-plant trajectories organized along three axes jointly --- nonlinearity
-\emph{family}, excitation \emph{class}, and sampling \emph{rate} (exact
-zero-order-hold) --- with per-instance Fisher-information identifiability
+multisine (or similarly narrowband) data, regenerated independently by every paper
+in this line of work. We introduce PLANTFORGE, a released, static, reproducible
+corpus of synthetic control-plant trajectories, generated on the fly from a
+procedural distribution (not sampled from the static released shards, which are
+a separate, versioned snapshot for reproducibility and identifiability-annotation
+reference; Section~\ref{sec:corpus}) and organized along three axes jointly ---
+nonlinearity \emph{family}, excitation \emph{class}, and sampling \emph{rate}
+(exact zero-order-hold) --- with per-instance Fisher-information identifiability
 annotations. Across 5 independently-seeded training runs, we show that a
 transformer trained on Wiener-Hammerstein-only data collapses off its training
-distribution (cross-family nMSE degradation of 93--118$\times$), and that training
+distribution (cross-family nMSE degradation of 112--179$\times$), and that training
 on PLANTFORGE's multi-axis corpus closes the rate and excitation gaps (to
 $\sim$1--2$\times$ for four of five families; the resonant drivetrain family
-improves but stays at 8$\times$) while only halving, not closing, the
-cross-family gap (93--118$\times \to$ 14--18$\times$). We then subject this result to three checks a
+improves but stays at 8.8$\times$) while substantially narrowing, but not closing,
+the cross-family gap (a $\sim$6$\times$ reduction in degradation, 112--179$\times \to$
+17--31$\times$). We then subject this result to three checks a
 released benchmark should survive but rarely does: (1) zero-shot transfer to
 three real measured plants (Silverbox, Cascaded Tanks, Bouc-Wen), where
 corpus-trained models again outperform the Wiener-Hammerstein-only model, but
 a simple classical ARX baseline outperforms \emph{both} trained transformers
-by 11--342$\times$ on every one of the three, tempering any claim of
+by 6--284$\times$ on every one of the three, tempering any claim of
 transformer superiority; (2) a within-cell statistical
 re-analysis showing that the corpus's own identifiability annotations do
 \emph{not} positively predict in-context prediction difficulty (median
-Spearman $r=-0.122$ across 40 cells), the opposite of our working hypothesis; and
+Spearman $r=-0.112$ across 40 cells), the opposite of our working hypothesis; and
 (3) full disclosure of a Simpson's-paradox confound our first analysis of (2)
 missed, and how we caught and corrected it. We release the corpus (240{,}000
 instances, CC~BY~4.0), all generation/training/evaluation code (MIT), and every
@@ -67,8 +71,8 @@ to infer a plant's dynamics from a short context of $(u, y)$ pairs, with no
 gradient updates at test time --- is an increasingly popular paradigm for control
 and mechatronics \citep{forgione2023system, piga2024adaptation}. The training
 recipe behind this line of work, however, is narrow and largely
-unreleased: each paper privately regenerates Wiener-Hammerstein-only white-noise
-data, the one family the incumbent generators support. No existing corpus varies
+unreleased: each paper privately regenerates Wiener-Hammerstein-only multisine (or
+similarly narrowband) data, the one family the incumbent generators support. No existing corpus varies
 \emph{nonlinearity family}, \emph{excitation class}, and \emph{sampling rate}
 jointly, and none ships per-instance identifiability annotations that would let a
 user reason about \emph{why} an instance is hard.
@@ -92,11 +96,11 @@ it, and we report them in full rather than adjusting the narrative around them
   \item Multi-axis training on PLANTFORGE closes the rate and excitation transfer
   gaps that Wiener-Hammerstein-only training leaves open (for four of five
   families; the resonant drivetrain family improves but does not close), but
-  only halves the harder cross-family gap --- reported here as an open
-  challenge, not a solved problem (Section~\ref{sec:headline}).
+  only substantially narrows, not closes, the harder cross-family gap ---
+  reported here as an open challenge, not a solved problem (Section~\ref{sec:headline}).
   \item Zero-shot on three real plants, a corpus-trained model beats a
   Wiener-Hammerstein-only model on every one, but a simple per-window ARX fit
-  beats \emph{both} trained transformers by 11--342$\times$ under an
+  beats \emph{both} trained transformers by 6--284$\times$ under an
   identical, leakage-free evaluation protocol (Section~\ref{sec:baselines}).
   \item The corpus's own identifiability annotations, hypothesized to predict
   in-context prediction difficulty, show a weak, robustly \emph{negative}
@@ -120,7 +124,7 @@ derives approximation/depth-separation bounds for in-context learning of
 empirical/benchmark side this theory does not cover.
 
 \paragraph{In-context system identification.}
-The training recipe we stress-test --- Wiener-Hammerstein-only white-noise
+The training recipe we stress-test --- Wiener-Hammerstein-only multisine
 pretraining --- is used across the \citet{forgione2023system,
 piga2024adaptation} line of work (the ``forgi86 lineage''), each regenerating
 its own private WH-only data. \citet{rufolo2025enhanced} propose an enhanced
@@ -236,6 +240,13 @@ CC~BY~4.0 \citep{plantforgedataset}. All generation, training, and evaluation
 code is released under MIT. Full datasheet, following the
 \citet{gebru2021datasheets} template (motivation, composition,
 collection process, uses, distribution, maintenance), accompanies the release.
+This static, versioned snapshot exists for reproducibility, identifiability-annotation
+reference, and this paper's own Section~\ref{sec:identifiability} experiment ---
+it is \emph{not} the transformer's literal training set: the \texttt{corpus}-trained
+models in Section~\ref{sec:headline} are trained on fresh draws from the same
+procedural generator distribution (regenerated per training batch, never read from
+the released shards), so the released corpus and the transformer's training
+distribution are related but distinct artifacts.
 
 \section{Experiments}
 \label{sec:experiments}
@@ -249,14 +260,16 @@ fixed evaluation seeds 900--905 across every model for paired comparison).
 nMSE is always the ratio of batch-mean query-horizon squared error to batch-mean
 query-horizon signal power, never a mean of per-window ratios.
 
-\subsection{Headline: multi-axis training closes the rate/excitation gap, halves the family gap}
+\subsection{Headline: multi-axis training closes the rate/excitation gap, narrows the family gap}
 \label{sec:headline}
 
 We compare two training recipes: \textbf{wh\_only}, trained exclusively on
-Wiener-Hammerstein white-noise data (the incumbent recipe), and
+Wiener-Hammerstein multisine data (the incumbent recipe), and
 \textbf{corpus}, trained on 4-of-5 PLANTFORGE families $\times$
 \{\texttt{multisine}, \texttt{prbs}\} $\times$ \{10, 50\,Hz\}, with
-\texttt{backlash}, \texttt{chirp}/\texttt{closedloop}, and 20\,Hz held out.
+\texttt{backlash}, \texttt{chirp}/\texttt{closedloop}, and 20\,Hz held out ---
+in both cases the training batches are drawn fresh from the generator
+distribution, never from the released static shards (Section~\ref{sec:corpus}).
 
 \begin{table}[h]
   \caption{Synthetic transfer matrix, nMSE (mean$\pm$std, $n=5$ seeds). $\times$ref is
@@ -268,31 +281,35 @@ Wiener-Hammerstein white-noise data (the incumbent recipe), and
     \toprule
     held-out axis & wh\_only nMSE & ($\times$ref) & corpus nMSE & ($\times$ref) \\
     \midrule
-    reference (train-like) & $0.0040\pm0.0004$ & $1.0\times$ & $0.0215\pm0.0017$ & $1.0\times$ \\
-    family \texttt{backlash}, dt=0.10 & $0.3880\pm0.0322$ & $97.7\times$ & $\mathbf{0.3107\pm0.0080}$ & $\mathbf{14.5\times}$ \\
-    family \texttt{backlash}, dt=0.05 & $0.3678\pm0.0408$ & $92.6\times$ & $\mathbf{0.2899\pm0.0095}$ & $\mathbf{13.5\times}$ \\
-    family \texttt{backlash}, dt=0.02 & $0.4665\pm0.0195$ & $117.5\times$ & $\mathbf{0.3927\pm0.0102}$ & $\mathbf{18.3\times}$ \\
-    excitation \texttt{chirp} & $0.1533\pm0.0645$ & $38.6\times$ & $\mathbf{0.0383\pm0.0143}$ & $\mathbf{1.8\times}$ \\
-    excitation \texttt{closedloop} & $0.0545\pm0.0056$ & $13.7\times$ & $\mathbf{0.0195\pm0.0031}$ & $\mathbf{0.9\times}$ \\
-    rate dt=0.05, \texttt{stribeck} & $0.0341\pm0.0039$ & $8.6\times$ & $\mathbf{0.0215\pm0.0017}$ & $\mathbf{1.0\times}$ \\
-    rate dt=0.05, \texttt{saturate} & $\mathbf{0.0141\pm0.0016}$ & $\mathbf{3.5\times}$ & $0.0285\pm0.0021$ & $1.3\times$ \\
-    rate dt=0.05, \texttt{boucwen} & $0.0916\pm0.0177$ & $23.1\times$ & $\mathbf{0.0178\pm0.0014}$ & $\mathbf{0.8\times}$ \\
-    rate dt=0.05, \texttt{drivetrain} & $0.2180\pm0.0156$ & $54.9\times$ & $\mathbf{0.1722\pm0.0111}$ & $\mathbf{8.0\times}$ \\
+    reference (train-like) & $0.0034\pm0.0001$ & $1.0\times$ & $0.0192\pm0.0007$ & $1.0\times$ \\
+    family \texttt{backlash}, dt=0.10 & $0.3800\pm0.0081$ & $111.6\times$ & $\mathbf{0.3205\pm0.0147}$ & $\mathbf{16.7\times}$ \\
+    family \texttt{backlash}, dt=0.05 & $0.3883\pm0.0085$ & $114.0\times$ & $\mathbf{0.3448\pm0.0161}$ & $\mathbf{17.9\times}$ \\
+    family \texttt{backlash}, dt=0.02 & $0.6112\pm0.0065$ & $179.4\times$ & $\mathbf{0.5988\pm0.0155}$ & $\mathbf{31.1\times}$ \\
+    excitation \texttt{chirp} & $0.1417\pm0.0393$ & $41.6\times$ & $\mathbf{0.0355\pm0.0129}$ & $\mathbf{1.8\times}$ \\
+    excitation \texttt{closedloop} & $0.0636\pm0.0162$ & $18.7\times$ & $\mathbf{0.0273\pm0.0112}$ & $\mathbf{1.4\times}$ \\
+    rate dt=0.05, \texttt{stribeck} & $0.0300\pm0.0012$ & $8.8\times$ & $\mathbf{0.0210\pm0.0017}$ & $\mathbf{1.1\times}$ \\
+    rate dt=0.05, \texttt{saturate} & $\mathbf{0.0140\pm0.0005}$ & $\mathbf{4.1\times}$ & $0.0287\pm0.0029$ & $1.5\times$ \\
+    rate dt=0.05, \texttt{boucwen} & $0.0869\pm0.0068$ & $25.5\times$ & $\mathbf{0.0186\pm0.0015}$ & $\mathbf{1.0\times}$ \\
+    rate dt=0.05, \texttt{drivetrain} & $0.2036\pm0.0022$ & $59.8\times$ & $\mathbf{0.1691\pm0.0108}$ & $\mathbf{8.8\times}$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 Table~\ref{tab:headline} and Figure~\ref{fig:transfer} summarize the result.
 Multi-axis training \textbf{solves the rate and excitation axes for most
-families}: the WH-only model's 3.5--39$\times$ degradation on interpolated rate
+families}: the WH-only model's 4.1--42$\times$ degradation on interpolated rate
 and held-out excitation collapses to $\sim$1--2$\times$ under corpus training
 for four of the five trained families. The exception is the resonant
-\texttt{drivetrain} family, whose rate cell improves 54.9$\times \to$
-8.0$\times$ but does not close --- a second open finding, invisible to
-single-family generators. Multi-axis training also \textbf{halves but does not
-close the cross-family gap} (93--118$\times \to$ 14--18$\times$, still an order
-of magnitude off reference) --- we report this as PLANTFORGE's open challenge
-track, not a solved problem. This 14--18$\times$ figure is the
+\texttt{drivetrain} family, whose rate cell improves 59.8$\times \to$
+8.8$\times$ but does not close --- a second open finding, invisible to
+single-family generators. Multi-axis training also \textbf{substantially
+narrows, but does not close, the cross-family gap} (a $\sim$6$\times$
+reduction in the degradation ratio, 112--179$\times \to$ 17--31$\times$, still
+an order of magnitude off reference; the reduction is far more modest in
+absolute nMSE terms, only 11\% at dt=0.05 --- the ratio and absolute framings
+tell different-sized stories, and we report both rather than the
+more-flattering one) --- we report this as PLANTFORGE's open challenge
+track, not a solved problem. This 17--31$\times$ figure is the
 \texttt{backlash} holdout specifically; a full leave-one-family-out sweep
 (Section~\ref{sec:discussion}, Table~\ref{tab:loo}) shows it is not a typical
 family-transfer number --- three of the five families show essentially no
@@ -350,9 +367,9 @@ trained rate, so it cannot supply a single in-context evaluation window.
     \toprule
     dataset & wh\_only & corpus & ARX & NARX2 \\
     \midrule
-    Silverbox (decimated 12$\times$) & $0.958\pm0.217$ & $0.331\pm0.040$ & $\mathbf{0.0028}$ & $0.0028$ \\
-    Cascaded Tanks (native rate, extrapolation) & $0.394\pm0.081$ & $0.084\pm0.043$ & $\mathbf{0.0075}$ & $3.7\times10^{9}$ \\
-    Bouc-Wen (decimated 15$\times$, exact) & $2.537\pm0.848$ & $1.589\pm0.361$ & $\mathbf{0.0603}$ & $0.0529$ \\
+    Silverbox (decimated 12$\times$) & $0.7941\pm0.2098$ & $0.4863\pm0.0937$ & $\mathbf{0.0028}$ & $0.0028$ \\
+    Cascaded Tanks (native rate, extrapolation) & $0.3653\pm0.1564$ & $0.0415\pm0.0121$ & $\mathbf{0.0073}$ & $3.8\times10^{9}$ \\
+    Bouc-Wen (decimated 15$\times$, exact) & $1.9684\pm0.4163$ & $1.3497\pm0.1756$ & $\mathbf{0.0616}$ & $0.0549$ \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -364,7 +381,7 @@ number at 5-seed scale: an earlier single-seed (seed 0 only) pass on Bouc-Wen
 showed the \emph{opposite} direction (corpus nMSE 2.05 vs.\ wh\_only 1.66) ---
 a result two independent reviewers confirmed was not a code defect given the
 data available at the time, since \texttt{wh\_only}'s seed-to-seed std on
-Bouc-Wen (0.848) is the largest relative variance of any real-plant number in
+Bouc-Wen (0.4163) is the largest of any real-plant standard deviation in
 this paper. At full 5-seed scale the direction reverses back to the
 Silverbox/Cascaded-Tanks pattern. We surface this not to bury it, but because
 it is exactly the failure mode multi-seed reporting exists to catch --- and
@@ -390,12 +407,12 @@ context samples, never touching the query.
 
 \paragraph{Result.} Table~\ref{tab:realplant} and Figure~\ref{fig:realplant}
 show ARX beating both trained transformers on all three real-plant benchmarks
-by 11--342$\times$ (Bouc-Wen: 26--42$\times$, within the same range). This
+by 6--284$\times$ (Bouc-Wen: 22--32$\times$, within the same range). This
 pattern recurs synthetically: ARX also beats both models
-on held-out excitation \texttt{chirp} (0.0039 vs.\ 0.0383/0.1533), held-out
-excitation \texttt{closedloop} (0.0036 vs.\ 0.0195/0.0545), and held-out rate
-\texttt{drivetrain} (0.0253 vs.\ 0.1722/0.2180), and roughly ties \texttt{corpus}
-on held-out family \texttt{backlash} at the coarsest rate (0.3116 vs.\ 0.3107).
+on held-out excitation \texttt{chirp} (0.0038 vs.\ 0.0355/0.1417), held-out
+excitation \texttt{closedloop} (0.0058 vs.\ 0.0273/0.0636), and held-out rate
+\texttt{drivetrain} (0.0254 vs.\ 0.1691/0.2036), and roughly ties \texttt{corpus}
+on held-out family \texttt{backlash} at the coarsest rate (0.3106 vs.\ 0.3205).
 
 \paragraph{Is this a fair comparison?} We verified it is. ARX and the
 transformer consume identical windows, identical normalization, and an
@@ -444,11 +461,12 @@ trajectory length exceeds one context window (10\,Hz cells are excluded: 128
 samples $<$ 224).
 
 \paragraph{A confound we caught ourselves.} Our first analysis pooled all
-40,000 instances and correlated directly: Spearman $r=-0.088$ (max rel-CRLB) and
-$r=-0.316$ (log$_{10}$ FIM condition), both statistically significant but with
-per-family breakdowns of \emph{opposite sign} (\texttt{backlash} $+0.294$,
-\texttt{drivetrain} $+0.091$, vs.\ \texttt{stribeck}$-0.081$,
-\texttt{saturate}$-0.148$, \texttt{boucwen}$-0.050$). This sign heterogeneity is
+40,000 instances and correlated directly: Spearman $r=-0.082$ (max rel-CRLB) and
+$r=-0.318$ (log$_{10}$ FIM condition), both statistically significant but with
+per-family breakdowns of \emph{heterogeneous sign and magnitude}
+(\texttt{backlash} $+0.320$, clearly positive, against a near-zero-to-negative
+spread for the other four: \texttt{boucwen} $+0.006$, \texttt{stribeck}$-0.126$,
+\texttt{saturate}$-0.136$, \texttt{drivetrain}$-0.159$). This heterogeneity is
 the fingerprint of a Simpson's-paradox confound: excitation and family choice
 change both identifiability and model difficulty independently, so a pooled
 correlation conflates between-cell structure with the within-cell effect the
@@ -464,7 +482,7 @@ identifiability dynamic range (all 40/40 cells pass this filter).
 
 \begin{table}[h]
   \caption{Within-cell Spearman $r$(max rel-CRLB, per-instance nMSE), aggregated
-  over 40 cells, 5 seeds, 1{,}000 instances/cell (39{,}994/40{,}000 finite).}
+  over 40 cells, 5 seeds, 1{,}000 instances/cell (40{,}000/40{,}000 finite).}
   \label{tab:ident}
   \centering
   \small
@@ -472,9 +490,9 @@ identifiability dynamic range (all 40/40 cells pass this filter).
     \toprule
      & median $r$ & mean $r$ & cells with $r>0$ \\
     \midrule
-    base & $-0.122$ & $-0.092$ & 10/40 \\
-    power-controlled (excl.\ bottom-decile power) & $-0.117$ & $-0.103$ & --- \\
-    range-filtered (IQR$>10^{-6}$, 40/40 cells kept) & $-0.122$ & --- & --- \\
+    base & $-0.112$ & $-0.093$ & 10/40 \\
+    power-controlled (excl.\ bottom-decile power) & $-0.113$ & $-0.102$ & --- \\
+    range-filtered (IQR$>10^{-6}$, 40/40 cells kept) & $-0.112$ & --- & --- \\
     \bottomrule
   \end{tabular}
 \end{table}
@@ -483,7 +501,7 @@ identifiability dynamic range (all 40/40 cells pass this filter).
 The within-cell correlation is small and negative, and survives both confound
 controls without flipping sign (Table~\ref{tab:ident}). Only 10/40 cells are
 positive, concentrated in \texttt{backlash}-\texttt{multisine} and
-\texttt{backlash}-\texttt{closedloop} ($r$ up to $+0.327$); every other family
+\texttt{backlash}-\texttt{closedloop} ($r$ up to $+0.340$); every other family
 is negative on balance (Figure~\ref{fig:spearman}).
 
 \begin{figure}[h]
@@ -502,10 +520,10 @@ an in-context predictor need not infer what barely affects $y$. The
 annotations remain valuable corpus metadata (e.g.\ for excitation-design
 studies) but should not be marketed as a prediction-difficulty predictor. A
 secondary methodological finding: naive quartile-binned \emph{means} of
-per-instance nMSE show a dramatic apparent upward trend (1.5$\times10^3 \to
-1.6\times10^9$ across quartiles) purely because per-instance nMSE has an
-extremely heavy right tail; the quartile \emph{medians} are flat (0.037,
-0.037, 0.040, 0.021, Figure~\ref{fig:quartile}) --- our own initial
+per-instance nMSE show a dramatic apparent upward trend (2.4 $\to
+9.3\times10^8$ across quartiles) purely because per-instance nMSE has an
+extremely heavy right tail; the quartile \emph{medians} are flat (0.035,
+0.040, 0.043, 0.021, Figure~\ref{fig:quartile}) --- our own initial
 mean-based framing for this experiment was itself a symptom of the same
 heavy-tail artifact, flagged here so the failure mode is documented, not
 just quietly fixed.
@@ -538,39 +556,40 @@ Bouc-Wen); only Wiener-Hammerstein Process Noise is excluded, by record
 length (Section~\ref{sec:realplant}). Real-plant nMSE uses $\leq$8
 non-overlapping windows per dataset (variance is over training seeds, not
 window sampling); the ARX comparison is a single deterministic run. The
-11--342$\times$ margins dwarf plausible window-sampling noise, but this is a
+6--284$\times$ margins dwarf plausible window-sampling noise, but this is a
 first zero-shot probe, not an exhaustive evaluation. Bouc-Wen's
-\texttt{wh\_only} variance (std 0.848 on a mean of 2.537) is our largest
-relative real-plant variance, and a single-seed preview of this cell showed
+\texttt{wh\_only} variance (std 0.4163 on a mean of 1.9684) is our largest
+real-plant standard deviation, and a single-seed preview of this cell showed
 the opposite ranking before the full 5-seed run (Section~\ref{sec:realplant})
 --- a reminder that per-cell variance, not just the headline mean, matters.
 
 \paragraph{Family coverage and held-out-family choice.} We hold out a single
 family (\texttt{backlash}) throughout Sections~\ref{sec:headline}--\ref{sec:identifiability}. A full leave-one-family-out sweep (5 seeds/family,
-\texttt{corpus} recipe; \texttt{boucwen} at $n=4$ after one seed diverged to
-non-finite weights) shows the corpus's five families split into two
+\texttt{corpus} recipe) shows the corpus's five families split into two
 difficulty tiers rather than one representative-or-outlier case
 (Table~\ref{tab:loo}). \texttt{backlash} and \texttt{drivetrain} are
-indistinguishable at $\sim$0.29--0.30 held-out nMSE (means differ by less
-than either's seed-to-seed std, $\pm1\sigma$ bands overlap) --- 6--8$\times$
-higher than the other three families ($\sim$0.035--0.047), which score
+indistinguishable at $\sim$0.33--0.34 held-out nMSE (means differ by less
+than either's seed-to-seed std, $\pm1\sigma$ bands overlap) --- 5--8$\times$
+higher than the other three families ($\sim$0.042--0.060), which score
 \emph{below} the trained-family-average reference when held out (an
-upper-bound reference averaged over 4 families including the 2 hard ones,
-not each easy family's true in-distribution nMSE --- read as ``nearly free
-to hold out,'' not ``beats training on it''). This recontextualizes the
-headline cross-family gap (Section~\ref{sec:headline}): the 14--18$\times$
-figure is specific to \texttt{backlash}, not a uniform property of family
-transfer. \texttt{drivetrain}'s difficulty is consistent with it already
-being hardest for held-out-\emph{rate} transfer ($8.0\times$,
+upper-bound reference averaged over the 4 trained families' two trained
+rates, including the 2 hard ones, not each easy family's true
+in-distribution nMSE --- read as ``nearly free to hold out,'' not ``beats
+training on it''). This recontextualizes the headline cross-family gap
+(Section~\ref{sec:headline}): the 17--31$\times$ figure is specific to
+\texttt{backlash}, not a uniform property of family transfer.
+\texttt{drivetrain}'s difficulty is consistent with it already being
+hardest for held-out-\emph{rate} transfer ($8.8\times$,
 Table~\ref{tab:headline}): its resonant two-inertia dynamics resist both
 transfer axes, while \texttt{backlash}'s deadzone is the only other family
 that does. The corpus's five families still omit multi-input/multi-output
 plants and time-varying parameters within a trajectory.
 
 \begin{table}[h]
-  \caption{Leave-one-family-out sweep (mean$\pm$std, \texttt{corpus} recipe):
-  reference (mean nMSE over the 4 trained families) vs.\ held-out family
-  nMSE, both dt=0.05, ranked by held-out nMSE.}
+  \caption{Leave-one-family-out sweep (mean$\pm$std, \texttt{corpus} recipe,
+  $n=5$ seeds every row): reference (mean nMSE over the 4 trained families,
+  averaged over the two trained rates) vs.\ held-out family nMSE (at the
+  held-out rate dt=0.05), ranked by held-out nMSE.}
   \label{tab:loo}
   \centering
   \small
@@ -578,16 +597,16 @@ plants and time-varying parameters within a trajectory.
     \toprule
     held-out family & reference nMSE & held-out nMSE & $n$ \\
     \midrule
-    drivetrain & $0.0345\pm0.0006$ & $0.2976\pm0.0110$ & 5 \\
-    backlash & $0.0600\pm0.0037$ & $0.2899\pm0.0095$ & 5 \\
-    saturate & $0.0823\pm0.0029$ & $0.0474\pm0.0028$ & 5 \\
-    stribeck & $0.0833\pm0.0042$ & $0.0388\pm0.0036$ & 5 \\
-    boucwen & $0.0776\pm0.0041$ & $0.0351\pm0.0016$ & 4 \\
+    backlash & $0.0484\pm0.0029$ & $0.3448\pm0.0161$ & 5 \\
+    drivetrain & $0.0790\pm0.0049$ & $0.3277\pm0.0247$ & 5 \\
+    saturate & $0.1175\pm0.0046$ & $0.0599\pm0.0064$ & 5 \\
+    boucwen & $0.1155\pm0.0035$ & $0.0452\pm0.0037$ & 5 \\
+    stribeck & $0.1207\pm0.0114$ & $0.0423\pm0.0023$ & 5 \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-\paragraph{Architecture ablation: the family gap is capacity-invariant (5-seed check).}
+\paragraph{Architecture ablation: the family gap persists across capacity, and does not resolve cleanly with scale (5-seed check).}
 All headline results (Sections~\ref{sec:headline}--\ref{sec:identifiability}) use one
 fixed transformer configuration (160 width, 5 layers, 1.58M params). We ran a
 lighter-weight check --- \texttt{corpus} recipe only, but at the same 5-seed
@@ -605,32 +624,43 @@ is an artifact of this specific size.
     \toprule
     variant & params & reference nMSE & family nMSE (dt=0.05) \\
     \midrule
-    narrow (d=80) & 407k & $0.0300\pm0.0029$ & $0.3154\pm0.0206$ \\
-    default (d=160, L=5) & 1.58M & $0.0215\pm0.0017$ & $0.2899\pm0.0095$ \\
-    shallow (L=2) & 655k & $0.0432\pm0.0035$ & $0.3198\pm0.0224$ \\
-    deep (L=8) & 2.51M & $0.0158\pm0.0009$ & $0.3012\pm0.0091$ \\
-    wide (d=320) & 6.24M & $0.0173\pm0.0011$ & $0.2956\pm0.0146$ \\
+    narrow (d=80) & 407k & $0.0300\pm0.0028$ & $0.3708\pm0.0108$ \\
+    default (d=160, L=5) & 1.58M & $0.0192\pm0.0007$ & $0.3448\pm0.0161$ \\
+    shallow (L=2) & 655k & $0.0419\pm0.0029$ & $0.3419\pm0.0094$ \\
+    deep (L=8) & 2.51M & $0.0155\pm0.0011$ & $0.3528\pm0.0088$ \\
+    wide (d=320) & 6.24M & $0.0170\pm0.0016$ & $0.3261\pm0.0172$ \\
     \bottomrule
   \end{tabular}
 \end{table}
 
-The absolute family-transfer nMSE spans $0.2899$--$0.3198$ across this
-15$\times$ parameter range --- a spread comparable to each individual
-variant's own 5-seed standard deviation (0.0091--0.0224), with no
-capacity-monotonic ordering (wide $<$ deep $<$ narrow $<$ shallow in absolute
-family nMSE, tracking neither width nor depth). In-distribution reference nMSE,
-by contrast, \emph{does} improve monotonically with capacity on both the width
-and depth axes, exactly as expected. Together this is evidence, not merely an
-absence of counter-evidence, that the cross-family gap is a genuine open
-problem rather than an artifact of the paper's specific model size: scaling
-capacity roughly 4$\times$ in either direction leaves it within noise of
-unchanged. The same $\times$ref ratio trap flagged above (Table~\ref{tab:loo}'s
-discussion) and in Section~\ref{sec:identifiability} recurs here: \texttt{deep}'s
-worse-looking relative gap ($19.1\times$ vs.\ \texttt{shallow}'s $7.4\times$)
-reflects a $3\times$ difference in reference nMSE (0.0158 vs.\ 0.0432), not
-absolute family-transfer error (0.3012 vs.\ 0.3198, within either variant's
-own std). This check does not cover context/query-length variation; a sweep
-over those axes is left to future work.
+Along the \textbf{width} axis (L=5 fixed), absolute family-transfer nMSE
+\emph{does} move monotonically with capacity --- narrow ($0.3708$) $>$ default
+($0.3448$) $>$ wide ($0.3261$) --- and the two extremes are genuinely
+distinguishable, not just noise ($\pm1\sigma$ bands $[0.3600,0.3816]$ for
+narrow and $[0.3089,0.3433]$ for wide do not overlap): going wider measurably
+helps. Along the \textbf{depth} axis (d=160 fixed), the direction reverses ---
+shallow ($0.3419$) $<$ default ($0.3448$) $<$ deep ($0.3528$), a monotonic
+\emph{worsening} with depth --- but here the extremes do overlap at
+$\pm1\sigma$ ($[0.3325,0.3513]$ vs.\ $[0.3440,0.3616]$), so this direction is
+not distinguishable from noise at $n=5$. In-distribution reference nMSE, by
+contrast, improves monotonically with capacity on \emph{both} axes, exactly as
+expected. Net effect: capacity scaling is not the fix either --- even
+\texttt{wide}, the best-performing variant across a 15$\times$ parameter
+range, remains $19.2\times$ its own reference, still an order of magnitude
+off, and depth scaling shows no benefit at all (if anything, a
+non-significant cost). We revise our original framing accordingly: the
+cross-family gap is not simply ``capacity-invariant'' (width does move it),
+but it is not a capacity problem in the sense of ``add more parameters and
+it resolves'' either --- at no point in this 15$\times$ range does either
+axis bring the family gap within reach of the in-distribution reference. The
+same $\times$ref ratio trap flagged above (Table~\ref{tab:loo}'s
+discussion) and in Section~\ref{sec:identifiability} recurs here:
+\texttt{deep}'s worse-looking relative gap ($22.8\times$ vs.\
+\texttt{shallow}'s $8.2\times$) is driven substantially by a $2.7\times$
+difference in reference nMSE (0.0155 vs.\ 0.0419), not solely by the
+(overlapping, not significant) absolute family-transfer difference
+(0.3528 vs.\ 0.3419). This check does not cover context/query-length
+variation; a sweep over those axes is left to future work.
 
 \paragraph{On negative and inconvenient results.} Two of this paper's four
 experiments (Sections~\ref{sec:baselines} and \ref{sec:identifiability})
@@ -663,9 +693,11 @@ training data narrows distribution-shift gaps for in-context SysID
 transformers) to progressively harder scrutiny: multi-seed error bars,
 zero-shot real-plant transfer, a classical ARX baseline, a corrected
 identifiability re-analysis, a 5-seed ablation, and a
-leave-one-family-out sweep. The claim holds up: the \texttt{backlash}
-held-out-family gap is capacity-invariant across a 15$\times$ range, and
-cross-family difficulty concentrates in two of five families
+leave-one-family-out sweep. The claim largely holds up: the \texttt{backlash}
+held-out-family gap persists across a 15$\times$ capacity range without
+resolving --- width scaling helps modestly and measurably, depth scaling does
+not, and even the best-performing variant remains an order of magnitude off
+reference --- and cross-family difficulty concentrates in two of five families
 (\texttt{backlash}, \texttt{drivetrain}), not uniformly. Two auxiliary
 claims did not hold: ARX beats both transformers on every real-plant
 benchmark and several synthetic cells, and identifiability annotations do
@@ -685,7 +717,7 @@ immune to high-variance cells. We report all of this as part of the release.
   \begin{itemize}
     \item Question: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?
     \item Answer: \answerYes{}
-    \item Justification: The abstract states five concrete, hedged claims: (i) WH-only training collapses off-distribution (cross-family nMSE degradation of $93$--$118\times$); (ii) PLANTFORGE's multi-axis corpus closes the rate/excitation gap for 4 of 5 families but only halves, not closes, the cross-family gap ($93$--$118\times \to 14$--$18\times$); (iii) a classical ARX baseline outperforms both trained transformers on all three real-plant benchmarks by $11$--$342\times$; (iv) identifiability annotations do not positively predict prediction difficulty (median Spearman $r=-0.122$ across 40 cells); (v) full disclosure of a Simpson's-paradox confound in our own first identifiability analysis. Each claim is backed by a corresponding experiment (Sections~\ref{sec:headline}--\ref{sec:identifiability}) and hedged by a matching Limitations paragraph (Section~\ref{sec:discussion}) --- e.g., the cross-family-gap claim explicitly notes it is specific to the \texttt{backlash} holdout, not a general property of family transfer (Section~\ref{sec:headline}, Section~\ref{sec:discussion}, Table~\ref{tab:loo}).
+    \item Justification: The abstract states five concrete, hedged claims: (i) WH-only training collapses off-distribution (cross-family nMSE degradation of $112$--$179\times$); (ii) PLANTFORGE's multi-axis corpus closes the rate/excitation gap for 4 of 5 families but only substantially narrows, not closes, the cross-family gap ($112$--$179\times \to 17$--$31\times$); (iii) a classical ARX baseline outperforms both trained transformers on all three real-plant benchmarks by $6$--$284\times$; (iv) identifiability annotations do not positively predict prediction difficulty (median Spearman $r=-0.112$ across 40 cells); (v) full disclosure of a Simpson's-paradox confound in our own first identifiability analysis. Each claim is backed by a corresponding experiment (Sections~\ref{sec:headline}--\ref{sec:identifiability}) and hedged by a matching Limitations paragraph (Section~\ref{sec:discussion}) --- e.g., the cross-family-gap claim explicitly notes it is specific to the \texttt{backlash} holdout, not a general property of family transfer (Section~\ref{sec:headline}, Section~\ref{sec:discussion}, Table~\ref{tab:loo}).
   \end{itemize}
 
 \item {\bf Limitations}
@@ -727,7 +759,7 @@ immune to high-variance cells. We report all of this as part of the release.
   \begin{itemize}
     \item Question: Does the paper report error bars suitably and correctly defined, or other appropriate information about the statistical significance of the experiments?
     \item Answer: \answerYes{}
-    \item Justification: Every headline, real-plant, ablation, and leave-one-family-out number is reported as mean$\pm$std over 5 (4 in one disclosed exception, Table~\ref{tab:loo}'s \texttt{boucwen} row, where one seed diverged to non-finite weights during training and was excluded) independently-seeded training runs. Section~\ref{sec:headline} explicitly discusses the limits of the $\pm1$ standard deviation heuristic used as a comparison bar (a descriptive, not multiplicity-corrected, statistic), and Section~\ref{sec:discussion} separately flags a specific high-variance cell (Bouc-Wen \texttt{wh\_only}, std 0.848 on a mean of 2.537) along with a documented single-seed-vs-5-seed reversal on that exact cell, rather than reporting only means.
+    \item Justification: Every headline, real-plant, ablation, and leave-one-family-out number is reported as mean$\pm$std over 5 independently-seeded training runs (Table~\ref{tab:loo} included: all five held-out-family variants reach $n=5$ finite runs, guarded against the non-finite-gradient training divergence documented in the released repository's commit history). Section~\ref{sec:headline} explicitly discusses the limits of the $\pm1$ standard deviation heuristic used as a comparison bar (a descriptive, not multiplicity-corrected, statistic), and Section~\ref{sec:discussion} separately flags a specific high-variance cell (Bouc-Wen \texttt{wh\_only}, std 0.4163 on a mean of 1.9684) along with a documented single-seed-vs-5-seed reversal on that exact cell, rather than reporting only means.
   \end{itemize}
 
 \item {\bf Experiments Compute Resource}
