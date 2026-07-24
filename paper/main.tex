@@ -500,9 +500,14 @@ identifiability dynamic range (all 40/40 cells pass this filter).
 \paragraph{Result: weak, robustly negative, not the hypothesized direction.}
 The within-cell correlation is small and negative, and survives both confound
 controls without flipping sign (Table~\ref{tab:ident}). Only 10/40 cells are
-positive, concentrated in \texttt{backlash}-\texttt{multisine} and
-\texttt{backlash}-\texttt{closedloop} ($r$ up to $+0.340$); every other family
-is negative on balance (Figure~\ref{fig:spearman}).
+positive, concentrated in two families: \texttt{backlash} (4/8 cells, family
+mean $+0.017$, driven by its \texttt{multisine} and \texttt{closedloop}
+excitations) and \texttt{drivetrain} (6/8 cells, family mean $-0.008$, close
+to null since its one negative cell, \texttt{chirp} at dt=0.05, is a large
+outlier); $r$ reaches $+0.340$ at its highest (\texttt{backlash},
+\texttt{closedloop}, dt=0.02). \texttt{stribeck}, \texttt{saturate}, and
+\texttt{boucwen} are negative on balance (family means $-0.12$ to $-0.19$,
+Figure~\ref{fig:spearman}).
 
 \begin{figure}[h]
   \centering

@@ -1,8 +1,9 @@
 """Regenerate all paper figures from the verified experiment results.
 
-Every number below is transcribed verbatim from
-docs/superpowers/results/2026-07-14-experiment-results.md (5 seeds,
-PF_SEED=0..4, 10k steps; identifiability run at full scale, 5 seeds x 40
+Every number below is transcribed verbatim from the 2026-07-23 post-fix
+result files (docs/superpowers/results/2026-07-23-{aggregate,ident-exp}-post-fix.txt;
+5 seeds, PF_SEED=0..4, 10k steps, all 50 checkpoints retrained under the
+training-divergence guard; identifiability run at full scale, 5 seeds x 40
 cells x 1000 instances/cell) -- this script does not compute anything new,
 it only visualizes already-reported, already-reviewed numbers.
 
@@ -74,10 +75,10 @@ def fig1_transfer_matrix():
         "boucwen",
         "drivetrain",
     ]
-    wh_mean = [0.0040, 0.3880, 0.3678, 0.4665, 0.1533, 0.0545, 0.0341, 0.0141, 0.0916, 0.2180]
-    wh_std = [0.0004, 0.0322, 0.0408, 0.0195, 0.0645, 0.0056, 0.0039, 0.0016, 0.0177, 0.0156]
-    co_mean = [0.0215, 0.3107, 0.2899, 0.3927, 0.0383, 0.0195, 0.0215, 0.0285, 0.0178, 0.1722]
-    co_std = [0.0017, 0.0080, 0.0095, 0.0102, 0.0143, 0.0031, 0.0017, 0.0021, 0.0014, 0.0111]
+    wh_mean = [0.0034, 0.3800, 0.3883, 0.6112, 0.1417, 0.0636, 0.0300, 0.0140, 0.0869, 0.2036]
+    wh_std = [0.0001, 0.0081, 0.0085, 0.0065, 0.0393, 0.0162, 0.0012, 0.0005, 0.0068, 0.0022]
+    co_mean = [0.0192, 0.3205, 0.3448, 0.5988, 0.0355, 0.0273, 0.0210, 0.0287, 0.0186, 0.1691]
+    co_std = [0.0007, 0.0147, 0.0161, 0.0155, 0.0129, 0.0112, 0.0017, 0.0029, 0.0015, 0.0108]
 
     x = np.arange(len(cells))
     w = 0.36
@@ -118,11 +119,11 @@ def fig1_transfer_matrix():
 def fig2_real_plant():
     datasets = ["Silverbox\n(decimated ≈50Hz)", "Cascaded_Tanks\n(native dt=4s, extrapolation)",
                 "Bouc-Wen\n(decimated 15x, exact 50Hz)"]
-    wh_mean = [0.9583, 0.3937, 2.5373]
-    wh_std = [0.2170, 0.0814, 0.8476]
-    co_mean = [0.3306, 0.0843, 1.5894]
-    co_std = [0.0397, 0.0430, 0.3607]
-    arx = [0.0028, 0.0075, 0.0603]   # single deterministic run, no std -- noted below
+    wh_mean = [0.7941, 0.3653, 1.9684]
+    wh_std = [0.2098, 0.1564, 0.4163]
+    co_mean = [0.4863, 0.0415, 1.3497]
+    co_std = [0.0937, 0.0121, 0.1756]
+    arx = [0.0028, 0.0073, 0.0616]   # single deterministic run, no std -- noted below
 
     x = np.arange(len(datasets))
     w = 0.22
@@ -165,26 +166,26 @@ def fig2_real_plant():
 # Figure 3: within-cell Spearman r, 40 cells, sign-colored strip + median
 # ---------------------------------------------------------------------------
 CELL_R = [
-    ("stribeck", "prbs", 0.05, -0.140), ("stribeck", "prbs", 0.02, -0.014),
-    ("stribeck", "multisine", 0.05, -0.241), ("stribeck", "multisine", 0.02, -0.165),
-    ("stribeck", "chirp", 0.05, -0.010), ("stribeck", "chirp", 0.02, -0.133),
-    ("stribeck", "closedloop", 0.05, -0.158), ("stribeck", "closedloop", 0.02, -0.082),
-    ("backlash", "prbs", 0.05, -0.325), ("backlash", "prbs", 0.02, -0.295),
-    ("backlash", "multisine", 0.05, 0.142), ("backlash", "multisine", 0.02, 0.158),
-    ("backlash", "chirp", 0.05, -0.193), ("backlash", "chirp", 0.02, -0.059),
-    ("backlash", "closedloop", 0.05, 0.327), ("backlash", "closedloop", 0.02, 0.315),
-    ("saturate", "prbs", 0.05, -0.239), ("saturate", "prbs", 0.02, -0.228),
-    ("saturate", "multisine", 0.05, -0.236), ("saturate", "multisine", 0.02, -0.169),
-    ("saturate", "chirp", 0.05, -0.270), ("saturate", "chirp", 0.02, -0.194),
-    ("saturate", "closedloop", 0.05, -0.254), ("saturate", "closedloop", 0.02, -0.130),
-    ("boucwen", "prbs", 0.05, -0.213), ("boucwen", "prbs", 0.02, -0.154),
-    ("boucwen", "multisine", 0.05, -0.101), ("boucwen", "multisine", 0.02, -0.103),
-    ("boucwen", "chirp", 0.05, -0.114), ("boucwen", "chirp", 0.02, -0.055),
-    ("boucwen", "closedloop", 0.05, -0.260), ("boucwen", "closedloop", 0.02, -0.136),
-    ("drivetrain", "prbs", 0.05, 0.109), ("drivetrain", "prbs", 0.02, -0.018),
-    ("drivetrain", "multisine", 0.05, 0.012), ("drivetrain", "multisine", 0.02, 0.018),
-    ("drivetrain", "chirp", 0.05, -0.109), ("drivetrain", "chirp", 0.02, 0.035),
-    ("drivetrain", "closedloop", 0.05, 0.010), ("drivetrain", "closedloop", 0.02, 0.002),
+    ("stribeck", "prbs", 0.05, -0.152), ("stribeck", "prbs", 0.02, -0.082),
+    ("stribeck", "multisine", 0.05, -0.292), ("stribeck", "multisine", 0.02, -0.247),
+    ("stribeck", "chirp", 0.05, -0.011), ("stribeck", "chirp", 0.02, -0.217),
+    ("stribeck", "closedloop", 0.05, -0.179), ("stribeck", "closedloop", 0.02, -0.110),
+    ("backlash", "prbs", 0.05, -0.335), ("backlash", "prbs", 0.02, -0.312),
+    ("backlash", "multisine", 0.05, 0.170), ("backlash", "multisine", 0.02, 0.198),
+    ("backlash", "chirp", 0.05, -0.152), ("backlash", "chirp", 0.02, -0.106),
+    ("backlash", "closedloop", 0.05, 0.331), ("backlash", "closedloop", 0.02, 0.340),
+    ("saturate", "prbs", 0.05, -0.252), ("saturate", "prbs", 0.02, -0.242),
+    ("saturate", "multisine", 0.05, -0.216), ("saturate", "multisine", 0.02, -0.138),
+    ("saturate", "chirp", 0.05, -0.246), ("saturate", "chirp", 0.02, -0.044),
+    ("saturate", "closedloop", 0.05, -0.257), ("saturate", "closedloop", 0.02, -0.149),
+    ("boucwen", "prbs", 0.05, -0.190), ("boucwen", "prbs", 0.02, -0.115),
+    ("boucwen", "multisine", 0.05, -0.091), ("boucwen", "multisine", 0.02, -0.086),
+    ("boucwen", "chirp", 0.05, -0.114), ("boucwen", "chirp", 0.02, -0.028),
+    ("boucwen", "closedloop", 0.05, -0.248), ("boucwen", "closedloop", 0.02, -0.090),
+    ("drivetrain", "prbs", 0.05, 0.095), ("drivetrain", "prbs", 0.02, 0.014),
+    ("drivetrain", "multisine", 0.05, 0.027), ("drivetrain", "multisine", 0.02, 0.031),
+    ("drivetrain", "chirp", 0.05, -0.222), ("drivetrain", "chirp", 0.02, 0.011),
+    ("drivetrain", "closedloop", 0.05, 0.001), ("drivetrain", "closedloop", 0.02, -0.018),
 ]
 FAMILIES = ["stribeck", "backlash", "saturate", "boucwen", "drivetrain"]
 
@@ -227,16 +228,16 @@ def fig3_within_cell_spearman():
 # Figure 4: quartile mean vs median -- the heavy-tail artifact
 # ---------------------------------------------------------------------------
 def fig4_quartile_artifact():
-    q_labels = ["Q1\n(metric≈.26)", "Q2\n(metric≈.75)", "Q3\n(metric≈2.1)", "Q4\n(metric≈91)"]
-    q_mean = [1517.2062, 93761480.0, 490145888.0, 1589712128.0]
-    q_median = [0.0367, 0.0375, 0.0404, 0.0211]
+    q_labels = ["Q1\n(metric≈.41)", "Q2\n(metric≈1.2)", "Q3\n(metric≈3.2)", "Q4\n(metric≈250)"]
+    q_mean = [2.4397, 11425202.0, 317037280.0, 931860480.0]
+    q_median = [0.0345, 0.0396, 0.0430, 0.0207]
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.6, 3.2))
     x = np.arange(4)
 
     ax1.plot(x, q_mean, marker="o", color=C_DIVERGE_NEG, linewidth=1.8, markersize=5)
     ax1.set_yscale("log")
-    ax1.set_ylim(3e2, 5e9)
+    ax1.set_ylim(1, 3e9)
     ax1.set_title("bin MEAN nMSE\n(looks like a strong positive trend)", fontsize=8.5, loc="left")
     ax1.set_ylabel("nMSE (log scale)")
     for xi, v in zip(x, q_mean):
