@@ -1,7 +1,7 @@
 """Track-2 evaluation: in-context SysID transfer across the corpus axes.
 
 Two shipped experiments (GPU recommended, checkpoint-resumable):
-  headline  — model trained on WH-only white-noise (the incumbent recipe, from the
+  headline  — model trained on WH-only multisine (the incumbent recipe, from the
               gate) evaluated across corpus families/rates: reproduces the 32x/10x
               degradation that motivates the corpus.
   corpus    — model trained on 4-of-5 corpus families (multisine+prbs, 2 rates)

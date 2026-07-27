@@ -1,5 +1,6 @@
 """Architecture ablation: does the paper's headline transfer-gap claim
-(rate/excitation closes, family gap halves) depend on model capacity?
+(rate/excitation closes, family gap substantially narrows but does not close)
+depend on model capacity?
 Compares 4 size variants (corpus recipe) against the default, aggregating
 mean+-std over every trained seed found per variant (seed 0 alone is used
 when that's all that exists, reported as n=1).
