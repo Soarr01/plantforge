@@ -9,3 +9,7 @@
   held-out rate dt=0.05 saturate: ARX 1303917811.1270 | NARX2 65951091549.2754
   held-out rate dt=0.05 boucwen: ARX 0.0314 | NARX2 67201189767.3810
   held-out rate dt=0.05 drivetrain: ARX 0.0254 | NARX2 45437980699.4533
+=== classical baselines on real-plant windows (nMSE) ===
+  Silverbox: ARX 0.0028 | NARX2 0.0028
+  Cascaded_Tanks: ARX 0.0073 | NARX2 3786126073.8901
+  Bouc-Wen: ARX 0.0616 | NARX2 0.0549
