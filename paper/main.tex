@@ -57,7 +57,7 @@ by 6--284$\times$ on every one of the three, tempering any claim of
 transformer superiority; (2) a within-cell statistical
 re-analysis showing that the corpus's own identifiability annotations do
 \emph{not} positively predict in-context prediction difficulty (median
-Spearman $r=-0.112$ across 40 cells), the opposite of our working hypothesis; and
+Spearman $r=-0.093$ across 40 cells), the opposite of our working hypothesis; and
 (3) full disclosure of a Simpson's-paradox confound our first analysis of (2)
 missed, and how we caught and corrected it. We release the corpus (240{,}000
 instances, CC~BY~4.0), all generation/training/evaluation code (MIT), and every
@@ -231,8 +231,8 @@ corpus generating exactly. (3) Closed-loop excitation is a genuine sequential
 loop, verified by checking that $u$ depends on the specific plant instance under
 control. (4) Identifiability annotations are directionally physical: an
 excitation that never exits the \texttt{backlash} deadzone yields a relative
-CRLB on the deadzone width $\sim$5$\times10^4$, versus $\sim$0.3 for an
-excitation that does.
+CRLB on the deadzone width $\sim$5$\times10^4$, versus $\sim$226 for an
+excitation that does --- a 233$\times$ gap in the correct direction.
 
 \paragraph{Release.} 240{,}000 instances (5 families $\times$ 4 excitations
 $\times$ 3 rates $\times$ 4{,}000 instances/cell), 583\,MB, released under
@@ -461,17 +461,20 @@ trajectory length exceeds one context window (10\,Hz cells are excluded: 128
 samples $<$ 224).
 
 \paragraph{A confound we caught ourselves.} Our first analysis pooled all
-40,000 instances and correlated directly: Spearman $r=-0.082$ (max rel-CRLB) and
-$r=-0.318$ (log$_{10}$ FIM condition), both statistically significant but with
-per-family breakdowns of \emph{heterogeneous sign and magnitude}
-(\texttt{backlash} $+0.320$, clearly positive, against a near-zero-to-negative
-spread for the other four: \texttt{boucwen} $+0.006$, \texttt{stribeck}$-0.126$,
-\texttt{saturate}$-0.136$, \texttt{drivetrain}$-0.159$). This heterogeneity is
-the fingerprint of a Simpson's-paradox confound: excitation and family choice
-change both identifiability and model difficulty independently, so a pooled
-correlation conflates between-cell structure with the within-cell effect the
-hypothesis is actually about. We discarded the pooled analysis as the primary
-result and re-ran within-cell.
+40,000 instances and correlated directly: Spearman $r=-0.380$ (max rel-CRLB) and
+$r=-0.314$ (log$_{10}$ FIM condition), both statistically significant. Per-family
+pooled correlations are uniformly negative but span a wide range
+(\texttt{stribeck} $-0.052$ to \texttt{backlash} $-0.380$ and
+\texttt{drivetrain} $-0.321$; \texttt{saturate} $-0.160$, \texttt{boucwen}
+$-0.091$) --- yet \texttt{backlash}'s own \emph{within-cell-averaged}
+correlation (each of its 8 cells correlated separately, then meaned) is
+$+0.071$, the \emph{opposite sign} of its own pooled value. This reversal,
+entirely internal to one family, is the fingerprint of a Simpson's-paradox
+confound: excitation and rate choice change both identifiability and model
+difficulty within \texttt{backlash} itself, so pooling across
+\texttt{backlash}'s own cells conflates that between-cell structure with the
+within-cell effect the hypothesis is actually about. We discarded the pooled
+analysis as the primary result and re-ran within-cell.
 
 \paragraph{Corrected analysis.} We compute Spearman $r$ within each of the 40
 cells separately, then aggregate. We further apply two confound controls: (a)
@@ -490,24 +493,25 @@ identifiability dynamic range (all 40/40 cells pass this filter).
     \toprule
      & median $r$ & mean $r$ & cells with $r>0$ \\
     \midrule
-    base & $-0.112$ & $-0.093$ & 10/40 \\
-    power-controlled (excl.\ bottom-decile power) & $-0.113$ & $-0.102$ & --- \\
-    range-filtered (IQR$>10^{-6}$, 40/40 cells kept) & $-0.112$ & --- & --- \\
+    base & $-0.093$ & $-0.070$ & 9/40 \\
+    power-controlled (excl.\ bottom-decile power) & $-0.075$ & $-0.074$ & --- \\
+    range-filtered (IQR$>10^{-6}$, 40/40 cells kept) & $-0.093$ & --- & --- \\
     \bottomrule
   \end{tabular}
 \end{table}
 
 \paragraph{Result: weak, robustly negative, not the hypothesized direction.}
 The within-cell correlation is small and negative, and survives both confound
-controls without flipping sign (Table~\ref{tab:ident}). Only 10/40 cells are
-positive, concentrated in two families: \texttt{backlash} (4/8 cells, family
-mean $+0.017$, driven by its \texttt{multisine} and \texttt{closedloop}
-excitations) and \texttt{drivetrain} (6/8 cells, family mean $-0.008$, close
-to null since its one negative cell, \texttt{chirp} at dt=0.05, is a large
-outlier); $r$ reaches $+0.340$ at its highest (\texttt{backlash},
-\texttt{closedloop}, dt=0.02). \texttt{stribeck}, \texttt{saturate}, and
-\texttt{boucwen} are negative on balance (family means $-0.12$ to $-0.19$,
-Figure~\ref{fig:spearman}).
+controls without flipping sign (Table~\ref{tab:ident}). Only 9/40 cells are
+positive, concentrated almost entirely in \texttt{backlash} (4/8 cells, family
+mean $+0.071$, driven by its \texttt{multisine} and \texttt{closedloop}
+excitations); the remaining 5 positive cells are split thinly across
+\texttt{saturate} (1/8), \texttt{boucwen} (2/8), and \texttt{drivetrain}
+(2/8). \texttt{stribeck} is negative in every one of its 8 cells. $r$ reaches
+$+0.352$ at its highest (\texttt{backlash}, \texttt{closedloop}, dt=0.02).
+Every other family's mean is negative (\texttt{stribeck} $-0.107$,
+\texttt{saturate} $-0.136$, \texttt{boucwen} $-0.091$, \texttt{drivetrain}
+$-0.086$, Figure~\ref{fig:spearman}).
 
 \begin{figure}[h]
   \centering
@@ -525,10 +529,13 @@ an in-context predictor need not infer what barely affects $y$. The
 annotations remain valuable corpus metadata (e.g.\ for excitation-design
 studies) but should not be marketed as a prediction-difficulty predictor. A
 secondary methodological finding: naive quartile-binned \emph{means} of
-per-instance nMSE show a dramatic apparent upward trend (2.4 $\to
-9.3\times10^8$ across quartiles) purely because per-instance nMSE has an
-extremely heavy right tail; the quartile \emph{medians} are flat (0.035,
-0.040, 0.043, 0.021, Figure~\ref{fig:quartile}) --- our own initial
+per-instance nMSE swing erratically across quartiles ($2.2\times10^4 \to
+3.3\times10^8 \to 8.2\times10^8 \to 1.1\times10^8$, not even monotonic)
+purely because per-instance nMSE has an extremely heavy right tail dominated
+by a handful of outliers per bin; the quartile \emph{medians}, by contrast,
+decrease monotonically and cleanly (0.083, 0.057, 0.020, 0.018,
+Figure~\ref{fig:quartile}) --- consistent with, and a cleaner picture than,
+the small negative correlation already reported above. Our own initial
 mean-based framing for this experiment was itself a symptom of the same
 heavy-tail artifact, flagged here so the failure mode is documented, not
 just quietly fixed.
@@ -722,7 +729,7 @@ immune to high-variance cells. We report all of this as part of the release.
   \begin{itemize}
     \item Question: Do the main claims made in the abstract and introduction accurately reflect the paper's contributions and scope?
     \item Answer: \answerYes{}
-    \item Justification: The abstract states five concrete, hedged claims: (i) WH-only training collapses off-distribution (cross-family nMSE degradation of $112$--$179\times$); (ii) PLANTFORGE's multi-axis corpus closes the rate/excitation gap for 4 of 5 families but only substantially narrows, not closes, the cross-family gap ($112$--$179\times \to 17$--$31\times$); (iii) a classical ARX baseline outperforms both trained transformers on all three real-plant benchmarks by $6$--$284\times$; (iv) identifiability annotations do not positively predict prediction difficulty (median Spearman $r=-0.112$ across 40 cells); (v) full disclosure of a Simpson's-paradox confound in our own first identifiability analysis. Each claim is backed by a corresponding experiment (Sections~\ref{sec:headline}--\ref{sec:identifiability}) and hedged by a matching Limitations paragraph (Section~\ref{sec:discussion}) --- e.g., the cross-family-gap claim explicitly notes it is specific to the \texttt{backlash} holdout, not a general property of family transfer (Section~\ref{sec:headline}, Section~\ref{sec:discussion}, Table~\ref{tab:loo}).
+    \item Justification: The abstract states five concrete, hedged claims: (i) WH-only training collapses off-distribution (cross-family nMSE degradation of $112$--$179\times$); (ii) PLANTFORGE's multi-axis corpus closes the rate/excitation gap for 4 of 5 families but only substantially narrows, not closes, the cross-family gap ($112$--$179\times \to 17$--$31\times$); (iii) a classical ARX baseline outperforms both trained transformers on all three real-plant benchmarks by $6$--$284\times$; (iv) identifiability annotations do not positively predict prediction difficulty (median Spearman $r=-0.093$ across 40 cells); (v) full disclosure of a Simpson's-paradox confound in our own first identifiability analysis. Each claim is backed by a corresponding experiment (Sections~\ref{sec:headline}--\ref{sec:identifiability}) and hedged by a matching Limitations paragraph (Section~\ref{sec:discussion}) --- e.g., the cross-family-gap claim explicitly notes it is specific to the \texttt{backlash} holdout, not a general property of family transfer (Section~\ref{sec:headline}, Section~\ref{sec:discussion}, Table~\ref{tab:loo}).
   \end{itemize}
 
 \item {\bf Limitations}

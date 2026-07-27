@@ -1,11 +1,15 @@
 """Regenerate all paper figures from the verified experiment results.
 
-Every number below is transcribed verbatim from the 2026-07-23 post-fix
-result files (docs/superpowers/results/2026-07-23-{aggregate,ident-exp}-post-fix.txt;
-5 seeds, PF_SEED=0..4, 10k steps, all 50 checkpoints retrained under the
-training-divergence guard; identifiability run at full scale, 5 seeds x 40
-cells x 1000 instances/cell) -- this script does not compute anything new,
-it only visualizes already-reported, already-reviewed numbers.
+Fig1/fig2 numbers are transcribed verbatim from
+docs/superpowers/results/2026-07-23-aggregate-post-fix.txt (5 seeds,
+PF_SEED=0..4, 10k steps, all 50 checkpoints retrained under the
+training-divergence guard). Fig3/fig4 numbers are transcribed verbatim
+from docs/superpowers/results/2026-07-27-ident-exp-post-identifiability-fix.txt
+(identifiability run at full scale, 5 seeds x 40 cells x 1000
+instances/cell, after the identifiability.py pinv-bug fix and the
+corpus annotation regeneration) -- this script does not compute
+anything new, it only visualizes already-reported, already-reviewed
+numbers.
 
     python figures/make_figures.py
 writes fig1_transfer_matrix.{png,pdf} .. fig4_quartile_artifact.{png,pdf}
@@ -166,26 +170,26 @@ def fig2_real_plant():
 # Figure 3: within-cell Spearman r, 40 cells, sign-colored strip + median
 # ---------------------------------------------------------------------------
 CELL_R = [
-    ("stribeck", "prbs", 0.05, -0.152), ("stribeck", "prbs", 0.02, -0.082),
-    ("stribeck", "multisine", 0.05, -0.292), ("stribeck", "multisine", 0.02, -0.247),
-    ("stribeck", "chirp", 0.05, -0.011), ("stribeck", "chirp", 0.02, -0.217),
-    ("stribeck", "closedloop", 0.05, -0.179), ("stribeck", "closedloop", 0.02, -0.110),
-    ("backlash", "prbs", 0.05, -0.335), ("backlash", "prbs", 0.02, -0.312),
-    ("backlash", "multisine", 0.05, 0.170), ("backlash", "multisine", 0.02, 0.198),
-    ("backlash", "chirp", 0.05, -0.152), ("backlash", "chirp", 0.02, -0.106),
-    ("backlash", "closedloop", 0.05, 0.331), ("backlash", "closedloop", 0.02, 0.340),
-    ("saturate", "prbs", 0.05, -0.252), ("saturate", "prbs", 0.02, -0.242),
-    ("saturate", "multisine", 0.05, -0.216), ("saturate", "multisine", 0.02, -0.138),
-    ("saturate", "chirp", 0.05, -0.246), ("saturate", "chirp", 0.02, -0.044),
-    ("saturate", "closedloop", 0.05, -0.257), ("saturate", "closedloop", 0.02, -0.149),
-    ("boucwen", "prbs", 0.05, -0.190), ("boucwen", "prbs", 0.02, -0.115),
-    ("boucwen", "multisine", 0.05, -0.091), ("boucwen", "multisine", 0.02, -0.086),
-    ("boucwen", "chirp", 0.05, -0.114), ("boucwen", "chirp", 0.02, -0.028),
-    ("boucwen", "closedloop", 0.05, -0.248), ("boucwen", "closedloop", 0.02, -0.090),
-    ("drivetrain", "prbs", 0.05, 0.095), ("drivetrain", "prbs", 0.02, 0.014),
-    ("drivetrain", "multisine", 0.05, 0.027), ("drivetrain", "multisine", 0.02, 0.031),
-    ("drivetrain", "chirp", 0.05, -0.222), ("drivetrain", "chirp", 0.02, 0.011),
-    ("drivetrain", "closedloop", 0.05, 0.001), ("drivetrain", "closedloop", 0.02, -0.018),
+    ("stribeck", "prbs", 0.05, -0.119), ("stribeck", "prbs", 0.02, -0.085),
+    ("stribeck", "multisine", 0.05, -0.178), ("stribeck", "multisine", 0.02, -0.073),
+    ("stribeck", "chirp", 0.05, -0.083), ("stribeck", "chirp", 0.02, -0.158),
+    ("stribeck", "closedloop", 0.05, -0.141), ("stribeck", "closedloop", 0.02, -0.023),
+    ("backlash", "prbs", 0.05, -0.006), ("backlash", "prbs", 0.02, -0.002),
+    ("backlash", "multisine", 0.05, 0.146), ("backlash", "multisine", 0.02, 0.158),
+    ("backlash", "chirp", 0.05, -0.298), ("backlash", "chirp", 0.02, -0.090),
+    ("backlash", "closedloop", 0.05, 0.307), ("backlash", "closedloop", 0.02, 0.352),
+    ("saturate", "prbs", 0.05, -0.005), ("saturate", "prbs", 0.02, 0.049),
+    ("saturate", "multisine", 0.05, -0.264), ("saturate", "multisine", 0.02, -0.202),
+    ("saturate", "chirp", 0.05, -0.121), ("saturate", "chirp", 0.02, -0.102),
+    ("saturate", "closedloop", 0.05, -0.287), ("saturate", "closedloop", 0.02, -0.153),
+    ("boucwen", "prbs", 0.05, 0.090), ("boucwen", "prbs", 0.02, 0.049),
+    ("boucwen", "multisine", 0.05, -0.163), ("boucwen", "multisine", 0.02, -0.160),
+    ("boucwen", "chirp", 0.05, -0.114), ("boucwen", "chirp", 0.02, -0.003),
+    ("boucwen", "closedloop", 0.05, -0.273), ("boucwen", "closedloop", 0.02, -0.155),
+    ("drivetrain", "prbs", 0.05, -0.075), ("drivetrain", "prbs", 0.02, -0.096),
+    ("drivetrain", "multisine", 0.05, -0.180), ("drivetrain", "multisine", 0.02, 0.036),
+    ("drivetrain", "chirp", 0.05, -0.309), ("drivetrain", "chirp", 0.02, 0.141),
+    ("drivetrain", "closedloop", 0.05, -0.158), ("drivetrain", "closedloop", 0.02, -0.043),
 ]
 FAMILIES = ["stribeck", "backlash", "saturate", "boucwen", "drivetrain"]
 
@@ -216,7 +220,7 @@ def fig3_within_cell_spearman():
                  "40 cells (5 families × 4 excitations × 2 rates), corpus model, 5 seeds",
                  loc="left", fontsize=9)
     ax.text(0.99, 0.03,
-            f"10/40 cells positive · black tick = per-family median · "
+            f"9/40 cells positive · black tick = per-family median · "
             f"blue = r≥0, red = r<0",
             transform=ax.transAxes, fontsize=6.5, color=MUTED, ha="right")
     ax.set_ylim(-0.4, 0.4)
@@ -228,17 +232,17 @@ def fig3_within_cell_spearman():
 # Figure 4: quartile mean vs median -- the heavy-tail artifact
 # ---------------------------------------------------------------------------
 def fig4_quartile_artifact():
-    q_labels = ["Q1\n(metric≈.41)", "Q2\n(metric≈1.2)", "Q3\n(metric≈3.2)", "Q4\n(metric≈250)"]
-    q_mean = [2.4397, 11425202.0, 317037280.0, 931860480.0]
-    q_median = [0.0345, 0.0396, 0.0430, 0.0207]
+    q_labels = ["Q1\n(metric≈1.7)", "Q2\n(metric≈11)", "Q3\n(metric≈1.2e3)", "Q4\n(metric≈3.3e4)"]
+    q_mean = [21972.9316, 334294720.0, 815716224.0, 110290000.0]
+    q_median = [0.0833, 0.0567, 0.0198, 0.0177]
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(7.6, 3.2))
     x = np.arange(4)
 
     ax1.plot(x, q_mean, marker="o", color=C_DIVERGE_NEG, linewidth=1.8, markersize=5)
     ax1.set_yscale("log")
-    ax1.set_ylim(1, 3e9)
-    ax1.set_title("bin MEAN nMSE\n(looks like a strong positive trend)", fontsize=8.5, loc="left")
+    ax1.set_ylim(1e3, 3e9)
+    ax1.set_title("bin MEAN nMSE\n(erratic, not even monotonic)", fontsize=8.5, loc="left")
     ax1.set_ylabel("nMSE (log scale)")
     for xi, v in zip(x, q_mean):
         dx = 10 if xi == 0 else 0
@@ -246,9 +250,9 @@ def fig4_quartile_artifact():
                      ha="left" if xi == 0 else "center", fontsize=6.5, color=MUTED)
 
     ax2.plot(x, q_median, marker="o", color=C_DIVERGE_POS, linewidth=1.8, markersize=5)
-    ax2.set_title("bin MEDIAN nMSE\n(the defensible summary: flat)", fontsize=8.5, loc="left")
+    ax2.set_title("bin MEDIAN nMSE\n(the defensible summary: decreases cleanly)", fontsize=8.5, loc="left")
     ax2.set_ylabel("nMSE")
-    ax2.set_ylim(0, 0.05)
+    ax2.set_ylim(0, 0.10)
     for xi, v in zip(x, q_median):
         ax2.annotate(f"{v:.3f}", (xi, v), textcoords="offset points", xytext=(0, 6),
                      ha="center", fontsize=6.5, color=MUTED)
@@ -261,7 +265,7 @@ def fig4_quartile_artifact():
 
     fig.tight_layout(rect=(0, 0, 1, 0.86))
     fig.suptitle("Quartiles of max rel-CRLB → per-instance nMSE: mean is\n"
-                 "heavy-tail-dominated, median is flat (n≈10,000/bin)",
+                 "heavy-tail-dominated, median decreases monotonically (n≈10,000/bin)",
                  fontsize=9, x=0.02, ha="left", y=0.99)
 
     _save(fig, "fig4_quartile_artifact")

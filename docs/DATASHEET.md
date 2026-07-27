@@ -176,3 +176,15 @@ The corpus generator is deterministic given a seed and instance count; the
 released reference corpus (4000 instances/cell) is a static snapshot. Future
 updates (e.g. additional families, additional real-plant validation) would
 be released as a new versioned corpus, not a silent overwrite.
+
+A 2026-07-27 revision corrects the `rel_crlb`/`log10_cond` identifiability
+annotations: `identifiability.py` previously used `torch.linalg.pinv` on the
+regularized Fisher information matrix, which silently returned `rel_crlb=0`
+for any parameter with near-zero sensitivity to the excitation (e.g. `sat`
+when the excitation never reaches the saturation limit) instead of a large
+value -- the opposite of correct CRLB semantics. This affected 9.3% of all
+240,000 rows (46.4% of the `saturate` family). The fix (a true regularized
+inverse) was applied and every shard's annotation was recomputed in place;
+`u`, `y`, and `theta` are unchanged (verified byte-identical) -- only the
+identifiability annotations changed. Prior revisions remain addressable on
+Hugging Face.

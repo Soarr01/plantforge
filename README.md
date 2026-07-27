@@ -95,9 +95,9 @@ family×excitation×rate cell, then aggregated — pooling across cells first is
 confounded by between-cell structure, verified via two independent confound
 controls: query-power decile filtering and annotation-range filtering):
 
-**Result: weak, robustly negative** — median within-cell r = **−0.112**
-(base) / −0.113 (power-controlled) / −0.112 (range-filtered), 5 training
-seeds × 40 cells, only 10/40 cells positive. Reframe: prediction difficulty
+**Result: weak, robustly negative** — median within-cell r = **−0.093**
+(base) / −0.075 (power-controlled) / −0.093 (range-filtered), 5 training
+seeds × 40 cells, only 9/40 cells positive. Reframe: prediction difficulty
 decouples from parameter-*recovery* difficulty — a parameter that is hard to
 identify (rel-CRLB) is typically one with little influence on the output, so
 the model doesn't need to infer what barely affects y. The annotations
@@ -227,6 +227,13 @@ output for every script is under
 `2026-07-23-{aggregate,ablation,leave-one-out,baselines,ident-exp}-post-fix.txt`;
 the investigation that led to the fix is documented in
 [`docs/superpowers/results/2026-07-21-normalization-divergence-investigation.md`](docs/superpowers/results/2026-07-21-normalization-divergence-investigation.md).
+The identifiability numbers above are further updated as of **2026-07-27**
+(a `torch.linalg.pinv` correctness bug in `identifiability.py` was found and
+fixed, and the corpus's own `rel_crlb`/`log10_cond` annotations were
+recomputed in place — see `docs/DATASHEET.md`'s "Will the dataset be
+updated?" section); the corresponding raw output is
+[`docs/superpowers/results/2026-07-27-ident-exp-post-identifiability-fix.txt`](docs/superpowers/results/2026-07-27-ident-exp-post-identifiability-fix.txt),
+superseding the identifiability portion of the 2026-07-23 file above.
 
 Earlier experiment results and reading notes (superseded by the above, kept
 for history):
