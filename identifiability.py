@@ -32,10 +32,23 @@ def identifiability(family: str, p: dict, u: torch.Tensor, dt: float):
         y_lo = simulate(family, pp, u, dt)
         sens[:, i] = ((y_hi - y_lo) / (2 * h).unsqueeze(0)).t()
     F = torch.einsum("bkt,blt->bkl", sens, sens) / SIGMA_REF ** 2
-    F = F + 1e-9 * torch.eye(K)                        # numerical floor
-    eigs = torch.linalg.eigvalsh(F)
-    log_cond = torch.log10(eigs[:, -1].clamp(min=1e-30) / eigs[:, 0].clamp(min=1e-30))
-    Finv = torch.linalg.pinv(F)
+    # Regularized true inverse via eigendecomposition, in float64. NOT
+    # torch.linalg.pinv: pinv's SVD-based rank truncation treats any
+    # near-singular eigenvalue direction (e.g. a parameter with ~zero
+    # sensitivity, like `sat` when the excitation never reaches the
+    # saturation limit) as null space and returns 0 for that entry of the
+    # inverse -- the OPPOSITE of correct CRLB semantics: zero sensitivity
+    # means maximally UNidentifiable, which must show a LARGE rel_crlb,
+    # not a near-zero one. The 1e-9 floor below guarantees every direction
+    # has a well-defined (if tiny) eigenvalue, so a true regularized
+    # inverse (invert every direction, never truncate) is both correct
+    # and numerically safe. float64 avoids float32 precision loss when
+    # dividing by eigenvalues as small as 1e-9.
+    F64 = F.double() + 1e-9 * torch.eye(K, dtype=torch.float64)
+    evals, evecs = torch.linalg.eigh(F64)
+    evals = evals.clamp(min=1e-9)
+    log_cond = torch.log10(evals[:, -1] / evals[:, 0])
+    Finv = (evecs * (1.0 / evals).unsqueeze(1)) @ evecs.transpose(1, 2)
     rel_crlb = torch.sqrt(torch.diagonal(Finv, dim1=1, dim2=2).clamp(min=0)) \
-        / theta.abs().clamp(min=1e-3)
-    return {"rel_crlb": rel_crlb, "log10_cond": log_cond, "keys": keys}
+        / theta.double().abs().clamp(min=1e-3)
+    return {"rel_crlb": rel_crlb.float(), "log10_cond": log_cond.float(), "keys": keys}

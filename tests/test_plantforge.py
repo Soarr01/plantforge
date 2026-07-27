@@ -98,6 +98,26 @@ def test_identifiability_flags_unexcited_parameter():
           f"(rel-CRLB weak {r_weak:.2f} vs strong {r_strong:.2f})")
 
 
+# ── Test 5b: a parameter with EXACTLY zero sensitivity (the excitation never
+#            reaches it at all, e.g. saturation never engaged) must show a
+#            LARGE rel_crlb, not a near-zero one -- the pinv-based inverse
+#            used to get this backwards (see 2026-07-27 fix) ───────────────
+def test_identifiability_zero_sensitivity_gives_large_not_zero_crlb():
+    B = 6
+    g = torch.Generator().manual_seed(2)
+    p = sample("saturate", B, g)
+    p["sat"] = torch.full((B,), 5.0)   # push the saturation limit far out of reach
+    T = 96
+    u = 0.1 * open_loop_input("prbs", T, B, 0.05, torch.Generator().manual_seed(3))
+    idn = identifiability("saturate", p, u, 0.05)
+    k = idn["keys"].index("sat")
+    assert idn["rel_crlb"][:, k].min() > 100, \
+        f"a parameter with zero sensitivity must show a LARGE rel_crlb, not near-zero: " \
+        f"{idn['rel_crlb'][:, k].tolist()}"
+    print(f"  PASS  test_identifiability_zero_sensitivity_gives_large_not_zero_crlb "
+          f"(sat rel-CRLB min {idn['rel_crlb'][:, k].min():.1f})")
+
+
 # ── Test 6: corpus shard roundtrip ───────────────────────────────────────────────────
 def test_corpus_cell_roundtrip():
     from plantforge.corpus import gen_cell
@@ -170,6 +190,7 @@ def _run_all():
     test_physical_consistency_of_pairs()
     test_closedloop_is_closed()
     test_identifiability_flags_unexcited_parameter()
+    test_identifiability_zero_sensitivity_gives_large_not_zero_crlb()
     test_corpus_cell_roundtrip()
     test_gen_cell_seeds_are_deterministic_across_hash_randomization()
     test_gen_cell_different_families_get_different_seeds()
